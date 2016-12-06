@@ -1,0 +1,4 @@
+This is valid BED file
+with multiline header
+chr1	1	4
+chr1	2	3
