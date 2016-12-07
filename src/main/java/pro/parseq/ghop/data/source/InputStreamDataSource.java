@@ -2,19 +2,21 @@ package pro.parseq.ghop.data.source;
 
 import java.io.InputStream;
 
+import pro.parseq.ghop.data.Track;
+
 public abstract class InputStreamDataSource extends DataSource {
 
-	private final String layer;
+	private final Track track;
 
 	protected final InputStream is;
 
-	public InputStreamDataSource(String layer, InputStream is) {
-		this.layer = layer;
+	public InputStreamDataSource(Track track, InputStream is) {
+		this.track = track;
 		this.is = is;
 	}
 
 	@Override
-	public String layer() {
-		return layer;
+	public Track track() {
+		return track;
 	}
 }

@@ -11,21 +11,23 @@ import org.junit.Test;
 import pro.parseq.ghop.data.Band;
 import pro.parseq.ghop.data.Filters;
 import pro.parseq.ghop.data.GenomicCoordinate;
+import pro.parseq.ghop.data.Track;
 
 public class BedFileDataSourceTest {
 
 	private static final String GENOME = "test";
-	private static final String LAYER = "seqs";
+	private static final String TRACK = "seqs";
+	private static final Track track = new Track(TRACK);
 	private static final String CHR1 = "chr1";
 	private static final String CHR2 = "chr2";
 
-	private DataSource dataSource = new BedFileDataSource(LAYER,
+	private DataSource dataSource = new BedFileDataSource(track,
 			getClass().getResourceAsStream("/contigs.bed"), GENOME);
 
 	@Test
 	public void testInstantiation() throws Exception {
 		assertThat(dataSource).isNotNull();
-		assertThat(dataSource.layer()).isEqualTo(LAYER);
+		assertThat(dataSource.track()).isEqualTo(track);
 	}
 
 	@Test
@@ -111,7 +113,7 @@ public class BedFileDataSourceTest {
 
 		GenomicCoordinate start = new GenomicCoordinate(GENOME, CHR1, 2);
 		GenomicCoordinate end = new GenomicCoordinate(GENOME, CHR1, 5);
-		Band band = new Band(LAYER, start, end);
+		Band band = new Band(track, start, end);
 
 		GenomicCoordinate coord = new GenomicCoordinate(GENOME, CHR1, 6);
 		Set<Band> generants = dataSource.leftBordersGenerants(1, coord, new Filters());
@@ -140,7 +142,7 @@ public class BedFileDataSourceTest {
 
 		GenomicCoordinate start = new GenomicCoordinate(GENOME, CHR1, 3);
 		GenomicCoordinate end = new GenomicCoordinate(GENOME, CHR1, 7);
-		Band band = new Band(LAYER, start, end);
+		Band band = new Band(track, start, end);
 
 		GenomicCoordinate coord = new GenomicCoordinate(GENOME, CHR1, 6);
 		Set<Band> generants = dataSource.rightBordersGenerants(0, coord, new Filters());
@@ -163,7 +165,7 @@ public class BedFileDataSourceTest {
 
 		GenomicCoordinate start = new GenomicCoordinate(GENOME, CHR1, 3);
 		GenomicCoordinate end = new GenomicCoordinate(GENOME, CHR1, 7);
-		Band band = new Band(LAYER, start, end);
+		Band band = new Band(track, start, end);
 
 		GenomicCoordinate coord = new GenomicCoordinate(GENOME, CHR1, 6);
 		Set<Band> coverage = dataSource.coverage(coord, null);

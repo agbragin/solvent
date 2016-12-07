@@ -7,10 +7,11 @@ import java.util.Set;
 import pro.parseq.ghop.data.Band;
 import pro.parseq.ghop.data.Filters;
 import pro.parseq.ghop.data.GenomicCoordinate;
+import pro.parseq.ghop.data.Track;
 
 public abstract class DataSource {
 
-	public abstract String layer();
+	public abstract Track track();
 	public abstract List<GenomicCoordinate> leftBorders(int count, GenomicCoordinate coord, Filters filters);
 	public abstract List<GenomicCoordinate> rightBorders(int count, GenomicCoordinate coord, Filters filters);
 	public abstract Set<Band> borderGenerants(GenomicCoordinate coord);

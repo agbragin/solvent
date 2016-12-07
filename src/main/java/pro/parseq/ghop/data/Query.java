@@ -7,28 +7,28 @@ public class Query {
 	private final GenomicCoordinate coord;
 	private final int left;
 	private final int right;
-	private final LayerSettings layerSettings;
+	private final TrackSettings trackSettings;
 
-	public Query(GenomicCoordinate coord, int left, int right, Set<String> layers) {
-
-		this.coord = coord;
-		this.left = left;
-		this.right = right;
-
-		layerSettings = new LayerSettings();
-		layers.stream().forEach(layer -> layerSettings.addLayer(layer));
-	}
-
-	public Query(GenomicCoordinate coord, int left, int right, LayerSettings layerSettings) {
+	public Query(GenomicCoordinate coord, int left, int right, Set<Track> tracks) {
 
 		this.coord = coord;
 		this.left = left;
 		this.right = right;
-		this.layerSettings = layerSettings;
+
+		trackSettings = new TrackSettings();
+		tracks.stream().forEach(track -> trackSettings.addLayer(track));
 	}
 
-	public LayerSettings getLayerSettings() {
-		return layerSettings;
+	public Query(GenomicCoordinate coord, int left, int right, TrackSettings trackSettings) {
+
+		this.coord = coord;
+		this.left = left;
+		this.right = right;
+		this.trackSettings = trackSettings;
+	}
+
+	public TrackSettings getTrackSettings() {
+		return trackSettings;
 	}
 
 	public GenomicCoordinate getCoord() {

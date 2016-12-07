@@ -12,6 +12,7 @@ import pro.parseq.ghop.data.Band;
 import pro.parseq.ghop.data.Filters;
 import pro.parseq.ghop.data.GenomicCoordinate;
 import pro.parseq.ghop.data.GenomicCoordinate.CoordinateComparator;
+import pro.parseq.ghop.data.Track;
 import pro.parseq.ghop.data.source.utils.BedFileEntry;
 import pro.parseq.ghop.data.source.utils.BedReader;
 
@@ -23,9 +24,9 @@ public class BedFileDataSource extends InputStreamDataSource {
 
 	private CoordinateComparator comparator = new GenomicCoordinate.CoordinateComparator();
 
-	public BedFileDataSource(String layer, InputStream bedFile, String referenceGenome) {
+	public BedFileDataSource(Track track, InputStream bedFile, String referenceGenome) {
 
-		super(layer, bedFile);
+		super(track, bedFile);
 
 		bedReader = new BedReader(bedFile);
 		Set<GenomicCoordinate> coords = new HashSet<>();
@@ -40,7 +41,7 @@ public class BedFileDataSource extends InputStreamDataSource {
 
 			coords.add(startCoord);
 			coords.add(endCoord);
-			bands.add(new Band(layer, startCoord, endCoord));
+			bands.add(new Band(track, startCoord, endCoord));
 		}
 
 		this.coords = new ArrayList<>(coords);

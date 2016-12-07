@@ -50,8 +50,7 @@ public class BedReader {
 			return null;
 		}
 		if (!BedFileEntry.pattern.matcher(line).matches()) {
-			// TODO: do it in a more gentle way
-			throw new RuntimeException(String.format("Malformed BED dataline: %s", line));
+			throw new IllegalBedFileEntryException(line);
 		}
 
 		String[] fileds = line.split(BedFileEntry.DELIMITER);

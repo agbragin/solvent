@@ -14,11 +14,12 @@ import org.springframework.stereotype.Component;
 import pro.parseq.ghop.data.Band;
 import pro.parseq.ghop.data.GenomicCoordinate;
 import pro.parseq.ghop.data.Query;
+import pro.parseq.ghop.data.Track;
 
 @Component
 public class MasterDataSource {
 
-	private Map<String, DataSource> dataSources = new HashMap<>();
+	private Map<Track, DataSource> dataSources = new HashMap<>();
 
 	/**
 	 * This is straightforward dummy implementation
@@ -29,27 +30,27 @@ public class MasterDataSource {
 
 		Set<Band> bands = new HashSet<>();
 		Set<GenomicCoordinate> coords = new HashSet<>();
-		for (String layer: query.getLayerSettings().getLayers()) {
+		for (Track track: query.getTrackSettings().getTracks()) {
 
 			// Retrieve layer's coordinate coverage
-			Set<Band> layerCoverage = dataSources.get(layer).coverage(
-					query.getCoord(), query.getLayerSettings().getLayerFilters(layer));
+			Set<Band> layerCoverage = dataSources.get(track).coverage(
+					query.getCoord(), query.getTrackSettings().getTrackFilters(track));
 			layerCoverage.stream().forEach(band -> {
 				coords.add(band.getStartCoord());
 				coords.add(band.getEndCoord());
 			});
 			// Retrieve layer's next bands' coordinates
-			Set<Band> layerNextBands = dataSources.get(layer).rightBordersGenerants(
+			Set<Band> layerNextBands = dataSources.get(track).rightBordersGenerants(
 					query.getRight(), query.getCoord(),
-					query.getLayerSettings().getLayerFilters(layer));
+					query.getTrackSettings().getTrackFilters(track));
 			layerNextBands.stream().forEach(band -> {
 				coords.add(band.getStartCoord());
 				coords.add(band.getEndCoord());
 			});
 			// Retrieve layer's previous bands' coordinates
-			Set<Band> layerPrevBands = dataSources.get(layer).leftBordersGenerants(
+			Set<Band> layerPrevBands = dataSources.get(track).leftBordersGenerants(
 					query.getLeft(), query.getCoord(),
-					query.getLayerSettings().getLayerFilters(layer));
+					query.getTrackSettings().getTrackFilters(track));
 			layerPrevBands.stream().forEach(band -> {
 				coords.add(band.getStartCoord());
 				coords.add(band.getEndCoord());
@@ -87,10 +88,10 @@ public class MasterDataSource {
 	}
 
 	public DataSource addDataSource(DataSource dataSource) {
-		return dataSources.put(dataSource.layer(), dataSource);
+		return dataSources.put(dataSource.track(), dataSource);
 	}
 
-	public Set<String> getLayers() {
+	public Set<Track> getTracks() {
 		return dataSources.keySet();
 	}
 }

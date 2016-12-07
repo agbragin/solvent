@@ -74,7 +74,7 @@ public class BedReaderTest {
 		try {
 			bedReader.parseCurrent();
 			fail("Expecting exception while parsing malformed dataline");
-		} catch (RuntimeException e) {}
+		} catch (IllegalBedFileEntryException e) {}
 	}
 
 	@Test
@@ -89,6 +89,6 @@ public class BedReaderTest {
 		try {
 			bedReader.parseCurrent();
 			fail("Expecting exception while encountering header after datalines");
-		} catch (RuntimeException e) {}
+		} catch (IllegalBedFileEntryException e) {}
 	}
 }

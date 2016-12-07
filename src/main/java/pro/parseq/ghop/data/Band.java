@@ -1,37 +1,41 @@
 package pro.parseq.ghop.data;
 
+import org.springframework.hateoas.core.Relation;
+
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 
+@Relation(collectionRelation = "bands")
 public class Band {
 
-	private final String layerId;
+	@JsonUnwrapped
+	private final Track track;
 
 	private final GenomicCoordinate startCoord;
 	private final GenomicCoordinate endCoord;
 
 	private JsonNode properties = JsonNodeFactory.instance.objectNode();
 
-	public Band(String layerId,
-			GenomicCoordinate startCoord, GenomicCoordinate endCoord) {
+	public Band(Track track, GenomicCoordinate startCoord, GenomicCoordinate endCoord) {
 
-		this.layerId = layerId;
+		this.track = track;
 		this.startCoord = startCoord;
 		this.endCoord = endCoord;
 	}
 
-	public Band(String layerId,
+	public Band(Track track,
 			GenomicCoordinate startCoord, GenomicCoordinate endCoord,
 			JsonNode properties) {
 
-		this.layerId = layerId;
+		this.track = track;
 		this.startCoord = startCoord;
 		this.endCoord = endCoord;
 		this.properties = properties;
 	}
 
-	public String getLayerId() {
-		return layerId;
+	public Track getTrack() {
+		return track;
 	}
 
 	public GenomicCoordinate getStartCoord() {
@@ -63,7 +67,7 @@ public class Band {
 			return false;
 		}
 
-		return layerId.equals(((Band) obj).layerId)
+		return track.equals(((Band) obj).track)
 				&& startCoord.equals(((Band) obj).startCoord)
 				&& endCoord.equals(((Band) obj).endCoord);
 	}
@@ -76,7 +80,8 @@ public class Band {
 	@Override
 	public String toString() {
 
-		return new StringBuilder(layerId)
+		return new StringBuilder()
+				.append(track)
 				.append("[")
 				.append(startCoord)
 				.append(";")
