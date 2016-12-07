@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.Resources;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -70,6 +71,21 @@ public class TrackController {
 			throw new RuntimeException(String.format(
 					"I/O exception while BED file manipultaions: %s", e.getMessage()));
 		}
+	}
+
+	@DeleteMapping("/{track}")
+	public Resource<Track> removeTrack(@PathVariable Track track) {
+
+		if (!masterDataSource.getTracks().contains(track)) {
+			throw new TrackNotFound(track.getName());
+		}
+
+		return trackResource(masterDataSource.removeDataSource(track));
+	}
+
+	@DeleteMapping
+	public Resources<Resource<Track>> removeAll() {
+		return trackResources(masterDataSource.removeAll());
 	}
 
 	private static final Resources<Resource<Track>> trackResources(Set<Track> tracks) {

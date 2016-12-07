@@ -91,6 +91,18 @@ public class MasterDataSource {
 		return dataSources.put(dataSource.track(), dataSource);
 	}
 
+	public Track removeDataSource(Track track) {
+		return dataSources.remove(track).track();
+	}
+
+	public Set<Track> removeAll() {
+
+		Set<Track> removedTracks = dataSources.keySet();
+		dataSources = new HashMap<>();
+
+		return removedTracks;
+	}
+
 	public Set<Track> getTracks() {
 		return dataSources.keySet();
 	}
