@@ -29,36 +29,38 @@ public class MasterDataSource {
 	public Set<Band> getBands(Query query) {
 
 		Set<Band> bands = new HashSet<>();
+		Set<Band> coverage = new HashSet<>();
 		Set<GenomicCoordinate> coords = new HashSet<>();
 		for (Track track: query.getTrackSettings().getTracks()) {
 
-			// Retrieve layer's coordinate coverage
-			Set<Band> layerCoverage = dataSources.get(track).coverage(
+			// Retrieve track's coordinate coverage
+			Set<Band> trackCoverage = dataSources.get(track).coverage(
 					query.getCoord(), query.getTrackSettings().getTrackFilters(track));
-			layerCoverage.stream().forEach(band -> {
+			trackCoverage.stream().forEach(band -> {
 				coords.add(band.getStartCoord());
 				coords.add(band.getEndCoord());
 			});
-			// Retrieve layer's next bands' coordinates
-			Set<Band> layerNextBands = dataSources.get(track).rightBordersGenerants(
+			coverage.addAll(trackCoverage);
+			// Retrieve track's next bands' coordinates
+			Set<Band> trackNextBands = dataSources.get(track).rightBordersGenerants(
 					query.getRight(), query.getCoord(),
 					query.getTrackSettings().getTrackFilters(track));
-			layerNextBands.stream().forEach(band -> {
+			trackNextBands.stream().forEach(band -> {
 				coords.add(band.getStartCoord());
 				coords.add(band.getEndCoord());
 			});
-			// Retrieve layer's previous bands' coordinates
-			Set<Band> layerPrevBands = dataSources.get(track).leftBordersGenerants(
+			// Retrieve track's previous bands' coordinates
+			Set<Band> trackPrevBands = dataSources.get(track).leftBordersGenerants(
 					query.getLeft(), query.getCoord(),
 					query.getTrackSettings().getTrackFilters(track));
-			layerPrevBands.stream().forEach(band -> {
+			trackPrevBands.stream().forEach(band -> {
 				coords.add(band.getStartCoord());
 				coords.add(band.getEndCoord());
 			});
 
-			bands.addAll(layerCoverage);
-			bands.addAll(layerNextBands);
-			bands.addAll(layerPrevBands);
+			bands.addAll(trackCoverage);
+			bands.addAll(trackNextBands);
+			bands.addAll(trackPrevBands);
 		}
 
 		List<GenomicCoordinate> sortedCoords = new ArrayList<>(coords);
@@ -68,15 +70,15 @@ public class MasterDataSource {
 		if (vOri < 0) {
 			vOri = -(vOri + 1);
 		}
-		Set<Band> output = new HashSet<>();
-		for (int i = vOri; i < sortedCoords.size(); ++i) {
+		Set<Band> output = new HashSet<>(coverage);
+		for (int i = vOri; i < sortedCoords.size() && (i - vOri) < query.getRight(); ++i) {
 			final int idx = i;
 			output.addAll(bands.stream()
 					.filter(band -> band.getStartCoord().equals(sortedCoords.get(idx))
 							|| band.getEndCoord().equals(sortedCoords.get(idx)))
 					.collect(Collectors.toSet()));
 		}
-		for (int i = vOri - 1; i > -1; --i) {
+		for (int i = vOri - 1; i > -1 && (vOri - 1 - i) < query.getLeft(); --i) {
 			final int idx = i;
 			output.addAll(bands.stream()
 					.filter(band -> band.getStartCoord().equals(sortedCoords.get(idx))

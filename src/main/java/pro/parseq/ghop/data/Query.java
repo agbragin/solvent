@@ -16,7 +16,7 @@ public class Query {
 		this.right = right;
 
 		trackSettings = new TrackSettings();
-		tracks.stream().forEach(track -> trackSettings.addLayer(track));
+		tracks.stream().forEach(track -> trackSettings.addTrack(track));
 	}
 
 	public Query(GenomicCoordinate coord, int left, int right, TrackSettings trackSettings) {

@@ -24,7 +24,7 @@ public class TrackSettings {
 		return trackFilters.put(track, filters);
 	}
 
-	public Filters addLayer(Track track) {
+	public Filters addTrack(Track track) {
 		return setTrackFilters(track, null);
 	}
 
