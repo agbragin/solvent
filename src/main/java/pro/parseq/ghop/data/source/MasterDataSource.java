@@ -28,8 +28,11 @@ public class MasterDataSource {
 	 */
 	public Set<Band> getBands(Query query) {
 
+		// Band collection from each source for the present query
 		Set<Band> bands = new HashSet<>();
+		// Band collection from each source that is covering present coordinate
 		Set<Band> coverage = new HashSet<>();
+		// Coordinate collection of all bands defined above
 		Set<GenomicCoordinate> coords = new HashSet<>();
 		for (Track track: query.getTrackSettings().getTracks()) {
 
@@ -40,7 +43,6 @@ public class MasterDataSource {
 				coords.add(band.getStartCoord());
 				coords.add(band.getEndCoord());
 			});
-			coverage.addAll(trackCoverage);
 			// Retrieve track's next bands' coordinates
 			Set<Band> trackNextBands = dataSources.get(track).rightBordersGenerants(
 					query.getRight(), query.getCoord(),
@@ -58,26 +60,51 @@ public class MasterDataSource {
 				coords.add(band.getEndCoord());
 			});
 
+			coverage.addAll(trackCoverage);
 			bands.addAll(trackCoverage);
 			bands.addAll(trackNextBands);
 			bands.addAll(trackPrevBands);
 		}
 
+		// Arrange retrieved coordinates in an ascending order
 		List<GenomicCoordinate> sortedCoords = new ArrayList<>(coords);
 		Collections.sort(sortedCoords, new GenomicCoordinate.CoordinateComparator());
+		/**
+		 * Try to find an index of requested coordinate in the retrieved coordinate collection,
+		 */
 		int vOri = Collections.binarySearch(sortedCoords, query.getCoord(),
 				new GenomicCoordinate.CoordinateComparator());
+		/**
+		 * If requested coordinate is found in the collection,
+		 * we should take coordinate next to it,
+		 * as we've already accounted it in the coverage
+		 */
+		int corr = 1;
 		if (vOri < 0) {
 			vOri = -(vOri + 1);
+			/**
+			 * But if not, than vOri is already the next coordinate
+			 * (see Collections.binarySearch method documentation)
+			 */
+			corr = 0;
 		}
+		// Bands to output
 		Set<Band> output = new HashSet<>(coverage);
-		for (int i = vOri; i < sortedCoords.size() && (i - vOri) < query.getRight(); ++i) {
+		/**
+		 * Take right borders generants
+		 */
+		for (int i = vOri + corr; i < sortedCoords.size() && (i - vOri - corr) < query.getRight(); ++i) {
 			final int idx = i;
 			output.addAll(bands.stream()
 					.filter(band -> band.getStartCoord().equals(sortedCoords.get(idx))
 							|| band.getEndCoord().equals(sortedCoords.get(idx)))
 					.collect(Collectors.toSet()));
 		}
+		/**
+		 * Take left border generants
+		 * (due to Collections.binarySearch mechanism we start iterating from (vOri-1) by default,
+		 * so no need in any corrections as we done in right borders generants)
+		 */
 		for (int i = vOri - 1; i > -1 && (vOri - 1 - i) < query.getLeft(); --i) {
 			final int idx = i;
 			output.addAll(bands.stream()
