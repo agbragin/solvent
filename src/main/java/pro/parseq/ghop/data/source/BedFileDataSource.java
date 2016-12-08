@@ -54,9 +54,9 @@ public class BedFileDataSource extends InputStreamDataSource {
 		// TODO: filters to be taken into account
 		int idx = Collections.binarySearch(coords, coord, comparator);
 		if (idx < 0) {
-			return ((-(idx + 1)) < count) ? coords.subList(0, -(idx + 1)) : coords.subList(-(idx + 1) - count, -(idx + 1));
+			return ((-(idx + 1)) <= count) ? coords.subList(0, -(idx + 1)) : coords.subList(-(idx + 1) - count, -(idx + 1));
 		} else {
-			return (idx < count) ? coords.subList(0, idx + 1) : coords.subList(idx - count, idx + 1);
+			return (idx <= count) ? coords.subList(0, idx + 1) : coords.subList(idx - count, idx + 1);
 		}
 	}
 
@@ -66,9 +66,9 @@ public class BedFileDataSource extends InputStreamDataSource {
 		// TODO: filters to be taken into account
 		int idx = Collections.binarySearch(coords, coord, comparator);
 		if (idx < 0) {
-			return ((coords.size() - (-(idx + 1))) < count) ? coords.subList(-(idx + 1), coords.size()) : coords.subList(-(idx + 1), -(idx + 1) + count);
+			return ((coords.size() - (-(idx + 1))) <= count) ? coords.subList(-(idx + 1), coords.size()) : coords.subList(-(idx + 1), -(idx + 1) + count);
 		} else {
-			return ((coords.size() - idx) < count) ? coords.subList(idx, coords.size()) : coords.subList(idx, idx + count + 1);
+			return ((coords.size() - idx) <= count) ? coords.subList(idx, coords.size()) : coords.subList(idx, idx + count + 1);
 		}
 	}
 

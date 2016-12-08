@@ -56,6 +56,7 @@ public class BandControllerTest {
 				.andExpect(status().isOk());
 	}
 
+	// TODO: perform band checks in a more appropriate way
 	@Test
 	public void testBedSources() throws Exception {
 
@@ -123,5 +124,7 @@ public class BandControllerTest {
 		assertThat(responseBody.get("_embedded").get("bands").get(0).get("startCoord").get("coord").asLong()).isEqualTo(0L);
 		assertThat(responseBody.get("_embedded").get("bands").get(0).get("endCoord").get("contig").asText()).isEqualTo("chr2");
 		assertThat(responseBody.get("_embedded").get("bands").get(0).get("endCoord").get("coord").asLong()).isEqualTo(150L);
+
+		// TODO: add more requests
 	}
 }
