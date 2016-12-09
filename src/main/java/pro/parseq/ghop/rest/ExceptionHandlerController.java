@@ -14,13 +14,13 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 @ControllerAdvice
 public class ExceptionHandlerController {
 
-	@ExceptionHandler(TrackNotFound.class)
+	@ExceptionHandler(TrackNotFoundException.class)
 	@ResponseStatus(HttpStatus.NOT_FOUND)
 	@ResponseBody
 	public ErrorResponse requestHandlingTrackNotFound(
-			HttpServletRequest request, TrackNotFound e) {
+			HttpServletRequest request, TrackNotFoundException e) {
 
 		return new ErrorResponse(new Date(), 404, "Track not found",
-				TrackNotFound.class, e.getMessage(), request.getServletPath());
+				TrackNotFoundException.class, e.getMessage(), request.getServletPath());
 	}
 }

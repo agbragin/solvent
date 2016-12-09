@@ -48,7 +48,7 @@ public class TrackController {
 	public Resource<Track> getTrack(@PathVariable Track track) {
 
 		if (!masterDataSource.getTracks().contains(track)) {
-			throw new TrackNotFound(track.getName());
+			throw new TrackNotFoundException(track.getName());
 		}
 
 		return trackResource(track);
@@ -77,7 +77,7 @@ public class TrackController {
 	public Resource<Track> removeTrack(@PathVariable Track track) {
 
 		if (!masterDataSource.getTracks().contains(track)) {
-			throw new TrackNotFound(track.getName());
+			throw new TrackNotFoundException(track.getName());
 		}
 
 		return trackResource(masterDataSource.removeDataSource(track));

@@ -35,7 +35,7 @@ public class BandController {
 
 		for (Track track: tracks) {
 			if (!masterDataSource.getTracks().contains(track)) {
-				throw new TrackNotFound(track.getName());
+				throw new TrackNotFoundException(track.getName());
 			}
 		}
 
