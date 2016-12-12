@@ -47,16 +47,16 @@ public class MasterDataSourceTest {
 	private static final GenomicCoordinate chr4_40 = new GenomicCoordinate(GENOME, "chr4", 40);
 	private static final GenomicCoordinate chr4_50 = new GenomicCoordinate(GENOME, "chr4", 50);
 
-	private static final Band chr1 = new Band(chromosomes, chr1_0, chr1_100);
-	private static final Band chr2 = new Band(chromosomes, chr2_0, chr2_150);
-	private static final Band chr4 = new Band(chromosomes, chr4_0, chr4_50);
+	private static final Band chr1 = new Band.BandBuilder(chromosomes, chr1_0, chr1_100).build();
+	private static final Band chr2 = new Band.BandBuilder(chromosomes, chr2_0, chr2_150).build();
+	private static final Band chr4 = new Band.BandBuilder(chromosomes, chr4_0, chr4_50).build();
 
-	private static final Band region1 = new Band(regions, chr1_10, chr1_20);
-	private static final Band region2 = new Band(regions, chr2_20, chr2_50);
-	private static final Band region3 = new Band(regions, chr2_50, chr2_70);
-	private static final Band region4 = new Band(regions, chr2_60, chr2_140);
-	private static final Band region5 = new Band(regions, chr4_0, chr4_10);
-	private static final Band region6 = new Band(regions, chr4_40, chr4_50);
+	private static final Band region1 = new Band.BandBuilder(regions, chr1_10, chr1_20).build();
+	private static final Band region2 = new Band.BandBuilder(regions, chr2_20, chr2_50).build();
+	private static final Band region3 = new Band.BandBuilder(regions, chr2_50, chr2_70).build();
+	private static final Band region4 = new Band.BandBuilder(regions, chr2_60, chr2_140).build();
+	private static final Band region5 = new Band.BandBuilder(regions, chr4_0, chr4_10).build();
+	private static final Band region6 = new Band.BandBuilder(regions, chr4_40, chr4_50).build();
 
 	private DataSource chromosomesSource = new BedFileDataSource(chromosomes,
 			getClass().getResourceAsStream(CHROMOSOMES_TRACK_BED), GENOME);

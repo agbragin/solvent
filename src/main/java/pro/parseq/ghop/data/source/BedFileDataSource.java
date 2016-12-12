@@ -38,10 +38,11 @@ public class BedFileDataSource extends InputStreamDataSource {
 					bedFileEntry.getChrom(), bedFileEntry.getChromStart());
 			GenomicCoordinate endCoord = new GenomicCoordinate(referenceGenome,
 					bedFileEntry.getChrom(), bedFileEntry.getChromEnd());
+			String name = bedFileEntry.getName();
 
 			coords.add(startCoord);
 			coords.add(endCoord);
-			bands.add(new Band(track, startCoord, endCoord));
+			bands.add(new Band.BandBuilder(track, startCoord, endCoord).name(name).build());
 		}
 
 		this.coords = new ArrayList<>(coords);
