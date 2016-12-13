@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import pro.parseq.ghop.data.Track;
-import pro.parseq.ghop.data.source.BedFileDataSource;
+import pro.parseq.ghop.data.source.BedFileDataSourceFactory;
 import pro.parseq.ghop.data.source.MasterDataSource;
 
 @RestController
@@ -30,6 +30,9 @@ public class TrackController {
 
 	@Autowired
 	private MasterDataSource masterDataSource;
+
+	@Autowired
+	private BedFileDataSourceFactory bedFileDataSourceFactory;
 
 	@GetMapping
 	public Resources<Resource<Track>> getTracks() {
@@ -64,7 +67,7 @@ public class TrackController {
 		try {
 
 			masterDataSource.addDataSource(
-					new BedFileDataSource(track, bed.getInputStream(), genome));
+					bedFileDataSourceFactory.newInstance(track, bed.getInputStream(), genome));
 
 			return getTrack(track);
 		} catch (IOException e) {

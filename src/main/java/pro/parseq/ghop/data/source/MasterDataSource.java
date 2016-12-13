@@ -2,6 +2,7 @@ package pro.parseq.ghop.data.source;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -9,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import pro.parseq.ghop.data.Band;
@@ -20,6 +22,9 @@ import pro.parseq.ghop.data.Track;
 public class MasterDataSource {
 
 	private Map<Track, DataSource> dataSources = new HashMap<>();
+
+	@Autowired
+	private Comparator<GenomicCoordinate> comparator;
 
 	/**
 	 * This is straightforward dummy implementation
@@ -68,12 +73,11 @@ public class MasterDataSource {
 
 		// Arrange retrieved coordinates in an ascending order
 		List<GenomicCoordinate> sortedCoords = new ArrayList<>(coords);
-		Collections.sort(sortedCoords, new GenomicCoordinate.CoordinateComparator());
+		Collections.sort(sortedCoords, comparator);
 		/**
 		 * Try to find an index of requested coordinate in the retrieved coordinate collection,
 		 */
-		int vOri = Collections.binarySearch(sortedCoords, query.getCoord(),
-				new GenomicCoordinate.CoordinateComparator());
+		int vOri = Collections.binarySearch(sortedCoords, query.getCoord(), comparator);
 		/**
 		 * If requested coordinate is found in the collection,
 		 * we should take coordinate next to it,

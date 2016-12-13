@@ -6,23 +6,38 @@ import static org.assertj.core.api.Assertions.atIndex;
 import java.util.List;
 import java.util.Set;
 
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import pro.parseq.ghop.data.Band;
 import pro.parseq.ghop.data.Filters;
 import pro.parseq.ghop.data.GenomicCoordinate;
 import pro.parseq.ghop.data.Track;
 
+@RunWith(SpringRunner.class)
+@SpringBootTest
 public class BedFileDataSourceTest {
 
-	private static final String GENOME = "test";
+	private static final String GENOME = "GRCh37.p13";
 	private static final String TRACK = "seqs";
 	private static final Track track = new Track(TRACK);
 	private static final String CHR1 = "chr1";
 	private static final String CHR2 = "chr2";
 
-	private DataSource dataSource = new BedFileDataSource(track,
-			getClass().getResourceAsStream("/contigs.bed"), GENOME);
+	@Autowired
+	private BedFileDataSourceFactory bedFileDataSourceFactory;
+
+	private DataSource dataSource;
+
+	@Before
+	public void setUpDataSource() throws Exception {
+		dataSource = bedFileDataSourceFactory
+				.newInstance(track, getClass().getResourceAsStream("/contigs.bed"), GENOME);
+	}
 
 	@Test
 	public void testInstantiation() throws Exception {

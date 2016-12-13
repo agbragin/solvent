@@ -26,13 +26,16 @@ import pro.parseq.ghop.data.Track;
 @SpringBootTest
 public class TrackControllerTest {
 
-	private static final String GENOME = "testGenome";
+	private static final String GENOME = "GRCh37.p13";
 
 	private static final String UNKNOWN_TRACK = "totallyUnknownTrack";
 	private static final Track unknown = new Track(UNKNOWN_TRACK);
 
 	private static final String TRACK = "testTrack";
 	private static final Track track = new Track(TRACK);
+
+	private static final String UNKNOWN_GENOME = "totallyUnknownReferenceGenome";
+	private static final String TEST_REFERENCE = "TestReference";
 
 	@Autowired
 	private MockMvc mvc;
@@ -70,5 +73,29 @@ public class TrackControllerTest {
 				.readTree(actions.andReturn().getResponse().getContentAsByteArray());
 
 		assertThat(responseBody.get("track").asText()).isEqualTo(TRACK);
+	}
+
+	@Test
+	public void testUploadTrackFromBedWithUnknownReference() throws Exception {
+
+		MockMultipartFile bed = new MockMultipartFile("bed",
+				getClass().getResourceAsStream("/contigs.bed"));
+		mvc.perform(fileUpload("/tracks/bed")
+						.file(bed)
+						.param("track", track.getName())
+						.param("genome", UNKNOWN_GENOME))
+				.andExpect(status().isBadRequest());
+	}
+
+	@Test
+	public void testUploadTrackFromBedWithUnknownContig() throws Exception {
+
+		MockMultipartFile bed = new MockMultipartFile("bed",
+				getClass().getResourceAsStream("/contigs.bed"));
+		mvc.perform(fileUpload("/tracks/bed")
+						.file(bed)
+						.param("track", track.getName())
+						.param("genome", TEST_REFERENCE))
+				.andExpect(status().isBadRequest());
 	}
 }

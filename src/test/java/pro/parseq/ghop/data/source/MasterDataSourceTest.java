@@ -7,15 +7,21 @@ import java.util.Set;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import pro.parseq.ghop.data.Band;
 import pro.parseq.ghop.data.GenomicCoordinate;
 import pro.parseq.ghop.data.Query;
 import pro.parseq.ghop.data.Track;
 
+@RunWith(SpringRunner.class)
+@SpringBootTest
 public class MasterDataSourceTest {
 
-	private static final String GENOME = "testGenome";
+	private static final String GENOME = "GRCh37.p13";
 
 	private static final String CHROMOSOMES_TRACK = "chromosomes";
 	private static final String REGIONS_TRACK = "regions";
@@ -58,19 +64,20 @@ public class MasterDataSourceTest {
 	private static final Band region5 = new Band.BandBuilder(regions, chr4_0, chr4_10).build();
 	private static final Band region6 = new Band.BandBuilder(regions, chr4_40, chr4_50).build();
 
-	private DataSource chromosomesSource = new BedFileDataSource(chromosomes,
-			getClass().getResourceAsStream(CHROMOSOMES_TRACK_BED), GENOME);
-	private DataSource regionsSource = new BedFileDataSource(regions,
-			getClass().getResourceAsStream(REGIONS_TRACK_BED), GENOME);
+	@Autowired
+	private BedFileDataSourceFactory bedFileDataSourceFactory;
 
+	@Autowired
 	private MasterDataSource masterDataSource;
 
 	@Before
 	public void setUp() throws Exception {
 
-		masterDataSource = new MasterDataSource();
-		masterDataSource.addDataSource(chromosomesSource);
-		masterDataSource.addDataSource(regionsSource);
+		masterDataSource.removeAll();
+		masterDataSource.addDataSource(bedFileDataSourceFactory
+				.newInstance(chromosomes, getClass().getResourceAsStream(CHROMOSOMES_TRACK_BED), GENOME));
+		masterDataSource.addDataSource(bedFileDataSourceFactory
+				.newInstance(regions, getClass().getResourceAsStream(REGIONS_TRACK_BED), GENOME));
 	}
 
 	@Test

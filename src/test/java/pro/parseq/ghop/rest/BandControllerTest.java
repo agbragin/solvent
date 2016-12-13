@@ -24,7 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @SpringBootTest
 public class BandControllerTest {
 
-	private static final String GENOME = "testGenome";
+	private static final String GENOME = "GRCh37.p13";
 
 	private static final String CHROMOSOMES_TRACK = "chromosomes";
 	private static final String REGIONS_TRACK = "regions";
