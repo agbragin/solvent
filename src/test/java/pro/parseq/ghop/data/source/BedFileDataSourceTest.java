@@ -128,7 +128,7 @@ public class BedFileDataSourceTest {
 
 		GenomicCoordinate start = new GenomicCoordinate(GENOME, CHR1, 2);
 		GenomicCoordinate end = new GenomicCoordinate(GENOME, CHR1, 5);
-		Band band = new Band.BandBuilder(track, start, end).build();
+		Band band = new Band.BandBuilder("seqs_2", track, start, end).build();
 
 		GenomicCoordinate coord = new GenomicCoordinate(GENOME, CHR1, 6);
 		Set<Band> generants = dataSource.leftBordersGenerants(1, coord, new Filters());
@@ -157,7 +157,7 @@ public class BedFileDataSourceTest {
 
 		GenomicCoordinate start = new GenomicCoordinate(GENOME, CHR1, 3);
 		GenomicCoordinate end = new GenomicCoordinate(GENOME, CHR1, 7);
-		Band band = new Band.BandBuilder(track, start, end).build();
+		Band band = new Band.BandBuilder("seqs_3", track, start, end).build();
 
 		GenomicCoordinate coord = new GenomicCoordinate(GENOME, CHR1, 6);
 		Set<Band> generants = dataSource.rightBordersGenerants(0, coord, new Filters());
@@ -180,7 +180,7 @@ public class BedFileDataSourceTest {
 
 		GenomicCoordinate start = new GenomicCoordinate(GENOME, CHR1, 3);
 		GenomicCoordinate end = new GenomicCoordinate(GENOME, CHR1, 7);
-		Band band = new Band.BandBuilder(track, start, end).build();
+		Band band = new Band.BandBuilder("seqs_3", track, start, end).build();
 
 		GenomicCoordinate coord = new GenomicCoordinate(GENOME, CHR1, 6);
 		Set<Band> coverage = dataSource.coverage(coord, null);

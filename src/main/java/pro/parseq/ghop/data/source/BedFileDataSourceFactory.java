@@ -42,7 +42,7 @@ public class BedFileDataSourceFactory {
 			bedReader = new BedReader(bedFile);
 			Set<GenomicCoordinate> coords = new HashSet<>();
 			for ( ; !bedReader.currentIsDataLine(); bedReader.next());
-			for ( ; !bedReader.isEndOfFile(); bedReader.next()) {
+			for (int i = 0; !bedReader.isEndOfFile(); bedReader.next(), ++i) {
 
 				BedFileEntry bedFileEntry = bedReader.parseCurrent();
 				GenomicCoordinate startCoord = new GenomicCoordinate(referenceGenome,
@@ -53,7 +53,8 @@ public class BedFileDataSourceFactory {
 
 				coords.add(startCoord);
 				coords.add(endCoord);
-				bands.add(new Band.BandBuilder(track, startCoord, endCoord).name(name).build());
+				bands.add(new Band.BandBuilder(String.format("%s_%d", track, i),
+						track, startCoord, endCoord).name(name).build());
 			}
 
 			this.coords = new ArrayList<>(coords);

@@ -9,6 +9,8 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 @Relation(collectionRelation = "bands")
 public class Band {
 
+	transient private String id;
+
 	@JsonUnwrapped
 	private final Track track;
 
@@ -18,10 +20,11 @@ public class Band {
 	private String name;
 	private JsonNode properties = JsonNodeFactory.instance.objectNode();
 
-	private Band(Track track,
+	private Band(String id, Track track,
 			GenomicCoordinate startCoord, GenomicCoordinate endCoord,
 			String name, JsonNode properties) {
 
+		this.id = id;
 		this.track = track;
 		this.startCoord = startCoord;
 		this.endCoord = endCoord;
@@ -70,14 +73,12 @@ public class Band {
 			return false;
 		}
 
-		return track.equals(((Band) obj).track)
-				&& startCoord.equals(((Band) obj).startCoord)
-				&& endCoord.equals(((Band) obj).endCoord);
+		return id.equals(((Band) obj).id);
 	}
 
 	@Override
 	public int hashCode() {
-		return toString().hashCode();
+		return id.hashCode();
 	}
 
 	@Override
@@ -95,6 +96,7 @@ public class Band {
 
 	public static class BandBuilder {
 
+		private final String id;
 		private final Track track;
 		private final GenomicCoordinate startCoord;
 		private final GenomicCoordinate endCoord;
@@ -102,8 +104,9 @@ public class Band {
 		private String name;
 		private JsonNode properties = JsonNodeFactory.instance.objectNode();
 
-		public BandBuilder(Track track, GenomicCoordinate startCoord, GenomicCoordinate endCoord) {
+		public BandBuilder(String id, Track track, GenomicCoordinate startCoord, GenomicCoordinate endCoord) {
 
+			this.id = id;
 			this.track = track;
 			this.startCoord = startCoord;
 			this.endCoord = endCoord;
@@ -120,7 +123,7 @@ public class Band {
 		}
 
 		public Band build() {
-			return new Band(track, startCoord, endCoord, name, properties);
+			return new Band(id, track, startCoord, endCoord, name, properties);
 		}
 	}
 }
