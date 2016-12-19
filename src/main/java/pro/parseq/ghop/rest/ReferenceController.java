@@ -16,10 +16,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import pro.parseq.ghop.data.service.Contig;
-import pro.parseq.ghop.data.service.ReferenceGenome;
-import pro.parseq.ghop.data.service.ReferenceService;
-import pro.parseq.ghop.data.utils.ReferenceGenomeContigs;
+import pro.parseq.ghop.entities.Contig;
+import pro.parseq.ghop.entities.ReferenceGenome;
+import pro.parseq.ghop.entities.ReferenceGenomeContigs;
+import pro.parseq.ghop.services.ReferenceService;
 
 @RestController
 @RequestMapping("/references")
@@ -46,7 +46,8 @@ public class ReferenceController {
 
 		Link selfLink = linkTo(methodOn(ReferenceController.class)
 				.getReferenceGenome(referenceGenome)).withSelfRel();
-		List<String> contigIds = contigs.stream().map(contig -> contig.getId())
+		List<String> contigIds = contigs.stream()
+				.map(contig -> contig.getId())
 				.collect(Collectors.toList());
 
 		return new Resource<>(new ReferenceGenomeContigs(contigIds), selfLink);
@@ -61,7 +62,8 @@ public class ReferenceController {
 		return new Resource<>(referenceGenome, selfLink);
 	}
 
-	private static final Resources<Resource<ReferenceGenome>> referenceGenomeResources(Set<ReferenceGenome> referenceGenomes) {
+	private static final Resources<Resource<ReferenceGenome>> referenceGenomeResources(
+			Set<ReferenceGenome> referenceGenomes) {
 
 		Link selfLink = linkTo(methodOn(ReferenceController.class)
 				.getReferenceGenomes()).withSelfRel();

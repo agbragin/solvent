@@ -13,11 +13,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import pro.parseq.ghop.data.Band;
-import pro.parseq.ghop.data.GenomicCoordinate;
-import pro.parseq.ghop.data.Query;
-import pro.parseq.ghop.data.Track;
-import pro.parseq.ghop.data.source.MasterDataSource;
+import pro.parseq.ghop.datasources.MasterDataSource;
+import pro.parseq.ghop.entities.Band;
+import pro.parseq.ghop.entities.Contig;
+import pro.parseq.ghop.entities.ReferenceGenome;
+import pro.parseq.ghop.entities.Track;
+import pro.parseq.ghop.exceptions.TrackNotFoundException;
+import pro.parseq.ghop.utils.GenomicCoordinate;
+import pro.parseq.ghop.utils.Query;
 
 @RestController
 @RequestMapping("/bands")
@@ -28,18 +31,20 @@ public class BandController {
 
 	// TODO: add tracks filtration and correlation
 	@GetMapping
-	public Resources<Band> getBands(@RequestParam String genome,
-			@RequestParam String contig, @RequestParam long coord,
+	public Resources<Band> getBands(
+			@RequestParam("genome") ReferenceGenome referenceGenome,
+			@RequestParam("contig") String contigId, @RequestParam long coord,
 			@RequestParam int left, @RequestParam int right,
 			@RequestParam Set<Track> tracks) {
 
 		for (Track track: tracks) {
 			if (!masterDataSource.getTracks().contains(track)) {
-				throw new TrackNotFoundException(track.getName());
+				throw new TrackNotFoundException(track);
 			}
 		}
 
-		GenomicCoordinate genomicCoord = new GenomicCoordinate(genome, contig, coord);
+		Contig contig = new Contig(referenceGenome, contigId);
+		GenomicCoordinate genomicCoord = new GenomicCoordinate(contig, coord);
 		Query query = new Query(genomicCoord, left, right, tracks);
 
 		return bandResources(masterDataSource.getBands(query), query);
@@ -48,8 +53,8 @@ public class BandController {
 	private static final Resources<Band> bandResources(Set<Band> bands, Query query) {
 
 		Link selfLink = linkTo(methodOn(BandController.class)
-				.getBands(query.getCoord().getReferenceGenome(),
-						query.getCoord().getContig(),
+				.getBands(query.getCoord().getContig().getReferenceGenome(),
+						query.getCoord().getContig().getId(),
 						query.getCoord().getCoord(),
 						query.getLeft(), query.getRight(),
 						query.getTrackSettings().getTracks()))

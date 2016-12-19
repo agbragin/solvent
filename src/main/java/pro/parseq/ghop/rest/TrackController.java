@@ -20,9 +20,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import pro.parseq.ghop.data.Track;
-import pro.parseq.ghop.data.source.BedFileDataSourceFactory;
-import pro.parseq.ghop.data.source.MasterDataSource;
+import pro.parseq.ghop.datasources.DataSourceFactory;
+import pro.parseq.ghop.datasources.MasterDataSource;
+import pro.parseq.ghop.entities.ReferenceGenome;
+import pro.parseq.ghop.entities.Track;
+import pro.parseq.ghop.exceptions.TrackNotFoundException;
 
 @RestController
 @RequestMapping("/tracks")
@@ -32,7 +34,7 @@ public class TrackController {
 	private MasterDataSource masterDataSource;
 
 	@Autowired
-	private BedFileDataSourceFactory bedFileDataSourceFactory;
+	private DataSourceFactory dataSourceFactory;
 
 	@GetMapping
 	public Resources<Resource<Track>> getTracks() {
@@ -51,7 +53,7 @@ public class TrackController {
 	public Resource<Track> getTrack(@PathVariable Track track) {
 
 		if (!masterDataSource.getTracks().contains(track)) {
-			throw new TrackNotFoundException(track.getName());
+			throw new TrackNotFoundException(track);
 		}
 
 		return trackResource(track);
@@ -62,12 +64,13 @@ public class TrackController {
 	 */
 	@RequestMapping(method = RequestMethod.POST, value = "/{bed}")
 	public Resource<Track> createTrack(@RequestParam Track track,
-			@RequestParam MultipartFile bed, @RequestParam String genome) {
+			@RequestParam MultipartFile bed, @RequestParam("genome") ReferenceGenome referenceGenome) {
 
 		try {
 
-			masterDataSource.addDataSource(
-					bedFileDataSourceFactory.newInstance(track, bed.getInputStream(), genome));
+			masterDataSource.addDataSource(dataSourceFactory
+					.newBedFileDataSourceInstance(track, bed.getInputStream(),
+							referenceGenome));
 
 			return getTrack(track);
 		} catch (IOException e) {
@@ -80,7 +83,7 @@ public class TrackController {
 	public Resource<Track> removeTrack(@PathVariable Track track) {
 
 		if (!masterDataSource.getTracks().contains(track)) {
-			throw new TrackNotFoundException(track.getName());
+			throw new TrackNotFoundException(track);
 		}
 
 		return trackResource(masterDataSource.removeDataSource(track));

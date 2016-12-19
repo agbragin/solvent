@@ -19,36 +19,23 @@ import org.springframework.test.web.servlet.ResultActions;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import pro.parseq.ghop.data.Track;
-
 @RunWith(SpringRunner.class)
 @AutoConfigureMockMvc
 @SpringBootTest
 public class TrackControllerTest {
-
-	private static final String GENOME = "GRCh37.p13";
-
-	private static final String UNKNOWN_TRACK = "totallyUnknownTrack";
-	private static final Track unknown = new Track(UNKNOWN_TRACK);
-
-	private static final String TRACK = "testTrack";
-	private static final Track track = new Track(TRACK);
-
-	private static final String UNKNOWN_GENOME = "totallyUnknownReferenceGenome";
-	private static final String TEST_REFERENCE = "TestReference";
 
 	@Autowired
 	private MockMvc mvc;
 
 	@Test
 	public void testUnknownTrackFetching() throws Exception {
-		mvc.perform(get(String.format("/tracks/%s", unknown)))
+		mvc.perform(get("/tracks/unknown"))
 				.andExpect(status().isNotFound());
 	}
 
 	@Test
 	public void testUnknownTrackRemoving() throws Exception {
-		mvc.perform(delete(String.format("/tracks/%s", unknown)))
+		mvc.perform(delete("/tracks/unknown"))
 				.andExpect(status().isNotFound());
 	}
 
@@ -59,20 +46,20 @@ public class TrackControllerTest {
 				getClass().getResourceAsStream("/contigs.bed"));
 		ResultActions actions = mvc.perform(fileUpload("/tracks/bed")
 						.file(bed)
-						.param("track", track.getName())
-						.param("genome", GENOME))
+						.param("track", "testTrack")
+						.param("genome", "GRCh37.p13"))
 				.andExpect(status().isOk());
 		JsonNode responseBody = new ObjectMapper()
 				.readTree(actions.andReturn().getResponse().getContentAsByteArray());
 
-		assertThat(responseBody.get("track").asText()).isEqualTo(TRACK);
+		assertThat(responseBody.get("track").asText()).isEqualTo("testTrack");
 
-		actions = mvc.perform(delete(String.format("/tracks/%s", track)))
+		actions = mvc.perform(delete("/tracks/testTrack"))
 				.andExpect(status().isOk());
 		responseBody = new ObjectMapper()
 				.readTree(actions.andReturn().getResponse().getContentAsByteArray());
 
-		assertThat(responseBody.get("track").asText()).isEqualTo(TRACK);
+		assertThat(responseBody.get("track").asText()).isEqualTo("testTrack");
 	}
 
 	@Test
@@ -82,8 +69,8 @@ public class TrackControllerTest {
 				getClass().getResourceAsStream("/contigs.bed"));
 		mvc.perform(fileUpload("/tracks/bed")
 						.file(bed)
-						.param("track", track.getName())
-						.param("genome", UNKNOWN_GENOME))
+						.param("track", "testTrack")
+						.param("genome", "unknown"))
 				.andExpect(status().isBadRequest());
 	}
 
@@ -94,8 +81,8 @@ public class TrackControllerTest {
 				getClass().getResourceAsStream("/contigs.bed"));
 		mvc.perform(fileUpload("/tracks/bed")
 						.file(bed)
-						.param("track", track.getName())
-						.param("genome", TEST_REFERENCE))
+						.param("track", "testTrack")
+						.param("genome", "TestReference"))
 				.andExpect(status().isBadRequest());
 	}
 }
