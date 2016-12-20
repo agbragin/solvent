@@ -2,13 +2,24 @@ package pro.parseq.ghop.entities;
 
 import java.util.Date;
 
+/**
+ * Represents error response entity body when exception raises
+ * 
+ * @author Alexander Afanasyev <a href="mailto:aafanasyev@parseq.pro">aafanasyev@parseq.pro</a>
+ */
 public class Error {
 
+	// Occurrence timestamp
 	private final Date timestamp;
+	// Integer http status
 	private final int status;
+	// Error name or title
 	private final String error;
+	// Exception class
 	private final Class<? extends Exception> exception;
+	// Error message
 	private final String message;
+	// URL caused the exception
 	private final String path;
 
 	public Error(Date timestamp, int status, String error, Class<? extends Exception> exception, String message, String path) {

@@ -4,6 +4,11 @@ import java.io.InputStream;
 
 import pro.parseq.ghop.entities.Track;
 
+/**
+ * {@link DataSource} represented by {@link InputStream}
+ * 
+ * @author Alexander Afanasyev <a href="mailto:aafanasyev@parseq.pro">aafanasyev@parseq.pro</a>
+ */
 public abstract class InputStreamDataSource extends DataSource {
 
 	private final Track track;

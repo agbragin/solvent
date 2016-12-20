@@ -18,10 +18,18 @@ import pro.parseq.ghop.utils.BedReader;
 import pro.parseq.ghop.utils.Filters;
 import pro.parseq.ghop.utils.GenomicCoordinate;
 
+/**
+ * BED-file {@link DataSource} straightforward implementation
+ * 
+ * @author Alexander Afanasyev <a href="mailto:aafanasyev@parseq.pro">aafanasyev@parseq.pro</a>
+ */
 public class BedFileDataSource extends InputStreamDataSource {
 
+	// BED-file reader
 	private BedReader bedReader;
+	// Ordered list of regions' coordinates (starts and stops)
 	private List<GenomicCoordinate> coords;
+	// Bands representing a regions from file (no special order in general)
 	private List<Band> bands = new ArrayList<>();
 
 	private Comparator<GenomicCoordinate> comparator;
@@ -35,7 +43,9 @@ public class BedFileDataSource extends InputStreamDataSource {
 		bedReader = new BedReader(bedFile);
 		Set<GenomicCoordinate> coords = new HashSet<>();
 
+		// Skip header lines
 		for ( ; !bedReader.currentIsDataLine(); bedReader.next());
+		// Read data lines
 		for (int i = 0; !bedReader.isEndOfFile(); bedReader.next(), ++i) {
 
 			BedFileEntry bedFileEntry = bedReader.parseCurrent();
@@ -46,14 +56,25 @@ public class BedFileDataSource extends InputStreamDataSource {
 					new Contig(referenceGenome, bedFileEntry.getChrom()),
 					bedFileEntry.getChromEnd());
 			String name = bedFileEntry.getName();
+			// TODO: access and process any other information (e.g. entry attributes)
 
 			coords.add(startCoord);
 			coords.add(endCoord);
+			/**
+			 * Generate surrogate band id to make it possible to differentiate
+			 * two region of the same geometry from different BED-entries
+			 * as ${TRACK_NAME}_${BED_ENTRY_NUMBER}
+			 */
 			bands.add(new Band.BandBuilder(String.format("%s_%d", track, i),
 					track, startCoord, endCoord).name(name).build());
 		}
 
 		this.coords = new ArrayList<>(coords);
+		/**
+		 * Critical part of BED data source implementation
+		 * Due to this we have a natural BED-file size limitation
+		 * as we keep all it's content in memory
+		 */
 		Collections.sort(this.coords, comparator);
 	}
 
@@ -82,7 +103,7 @@ public class BedFileDataSource extends InputStreamDataSource {
 	}
 
 	@Override
-	public Set<Band> borderGenerants(GenomicCoordinate coord) {
+	public Set<Band> borderGenerants(GenomicCoordinate coord, Filters filters) {
 
 		// TODO: optimize this request
 		return bands.stream()

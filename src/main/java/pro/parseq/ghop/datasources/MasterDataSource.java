@@ -19,9 +19,17 @@ import pro.parseq.ghop.entities.Track;
 import pro.parseq.ghop.utils.GenomicCoordinate;
 import pro.parseq.ghop.utils.Query;
 
+/**
+ * Data sources' master, that makes available to perform queries for objects from them
+ * 
+ * @author Alexander Afanasyev <a href="mailto:aafanasyev@parseq.pro">aafanasyev@parseq.pro</a>
+ */
 @Component
 public class MasterDataSource {
 
+	/**
+	 * In this straightforward implementation we keep information about data sources in this map
+	 */
 	private Map<Track, DataSource> dataSources = new HashMap<>();
 
 	@Autowired
@@ -31,6 +39,12 @@ public class MasterDataSource {
 	 * This is straightforward dummy implementation
 	 * 
 	 * TODO: do it in a more optimized way
+	 */
+	/**
+	 * Query for data sources' objects
+	 * 
+	 * @param query {@link Query} for objects (encapsulates information about track filters, correlations etc.)
+	 * @return {@link Band} {@link Set} for present query
 	 */
 	public Set<Band> getBands(Query query) {
 
@@ -129,6 +143,11 @@ public class MasterDataSource {
 		return dataSources.remove(track).track();
 	}
 
+	/**
+	 * Note, that invocation of this method will evict cache associated with reference genomes information
+	 * 
+	 * TODO: it's wrong to do this here, change cache eviction logic
+	 */
 	@CacheEvict("referenceGenomes")
 	public Set<Track> removeAll() {
 

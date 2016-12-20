@@ -8,9 +8,15 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 
 import pro.parseq.ghop.utils.GenomicCoordinate;
 
+/**
+ * Central entity representing data source object
+ * 
+ * @author Alexander Afanasyev <a href="mailto:aafanasyev@parseq.pro">aafanasyev@parseq.pro</a>
+ */
 @Relation(collectionRelation = "bands")
 public class Band {
 
+	// Object's identifier (should be unique across all data sources)
 	transient private String id;
 
 	@JsonUnwrapped

@@ -7,6 +7,11 @@ import pro.parseq.ghop.entities.Contig;
 import pro.parseq.ghop.entities.ReferenceGenome;
 import pro.parseq.ghop.exceptions.ReferenceGenomeNotFoundException;
 
+/**
+ * Service contract to access reference genomes' information
+ * 
+ * @author Alexander Afanasyev <a href="mailto:aafanasyev@parseq.pro">aafanasyev@parseq.pro</a>
+ */
 public interface ReferenceService {
 
 	/**

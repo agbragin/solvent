@@ -53,15 +53,15 @@ public class BedFileDataSourceTest {
 		Contig chr1 = new Contig(referenceGenome, "chr1");
 
 		GenomicCoordinate coord = new GenomicCoordinate(chr1, 5);
-		Set<Band> generants = dataSource.borderGenerants(coord);
+		Set<Band> generants = dataSource.borderGenerants(coord, null);
 		assertThat(generants).size().isEqualTo(1);
 
 		coord = new GenomicCoordinate(chr1, 6);
-		generants = dataSource.borderGenerants(coord);
+		generants = dataSource.borderGenerants(coord, null);
 		assertThat(generants).size().isEqualTo(0);
 
 		coord = new GenomicCoordinate(chr1, 2);
-		generants = dataSource.borderGenerants(coord);
+		generants = dataSource.borderGenerants(coord, null);
 		assertThat(generants).size().isEqualTo(2);
 	}
 

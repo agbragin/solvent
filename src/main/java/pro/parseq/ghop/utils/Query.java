@@ -11,9 +11,13 @@ import pro.parseq.ghop.entities.Track;
  */
 public class Query {
 
+	// Bearing genomic coordinate
 	private final GenomicCoordinate coord;
+	// Left borders count (positive, 0-based)
 	private final int left;
+	// Right borders count (positive, 0-based)
 	private final int right;
+	// Encapsulates track filters and correlations
 	private final TrackSettings trackSettings;
 
 	public Query(GenomicCoordinate coord, int left, int right, Set<Track> tracks) {

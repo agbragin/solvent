@@ -10,6 +10,11 @@ import pro.parseq.ghop.entities.ReferenceGenome;
 import pro.parseq.ghop.entities.Track;
 import pro.parseq.ghop.utils.GenomicCoordinate;
 
+/**
+ * Factory to instantiate data sources in runtime
+ * 
+ * @author Alexander Afanasyev <a href="mailto:aafanasyev@parseq.pro">aafanasyev@parseq.pro</a>
+ */
 @Component
 public class DataSourceFactory {
 
@@ -20,4 +25,6 @@ public class DataSourceFactory {
 			InputStream bedFile, ReferenceGenome referenceGenome) {
 		return new BedFileDataSource(track, bedFile, referenceGenome, comparator);
 	}
+
+	// TODO: add more data source implementation instantiation methods
 }

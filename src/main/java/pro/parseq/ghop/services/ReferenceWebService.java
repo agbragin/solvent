@@ -21,6 +21,11 @@ import pro.parseq.ghop.entities.Contig;
 import pro.parseq.ghop.entities.ReferenceGenome;
 import pro.parseq.ghop.exceptions.ReferenceGenomeNotFoundException;
 
+/**
+ * {@link ReferenceService} implementation based on refservice web-service
+ * 
+ * @author Alexander Afanasyev <a href="mailto:aafanasyev@parseq.pro">aafanasyev@parseq.pro</a>
+ */
 @Component
 public class ReferenceWebService implements ReferenceService {
 
