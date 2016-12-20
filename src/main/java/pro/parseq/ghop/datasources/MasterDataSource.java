@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Component;
 
 import pro.parseq.ghop.entities.Band;
@@ -128,6 +129,7 @@ public class MasterDataSource {
 		return dataSources.remove(track).track();
 	}
 
+	@CacheEvict("referenceGenomes")
 	public Set<Track> removeAll() {
 
 		Set<Track> removedTracks = dataSources.keySet();

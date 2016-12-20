@@ -8,7 +8,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class Contig {
 
 	/**
+	 * Can't use here something like this: @JsonUnwrapped(prefix = "referenceGenome")
+	 * due to: https://github.com/FasterXML/jackson-databind/issues/1467
 	 * 
+	 * TODO: change if it would be fixed
 	 */
 	private ReferenceGenome referenceGenome;
 
