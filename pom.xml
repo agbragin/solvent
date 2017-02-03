@@ -14,7 +14,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>1.4.2.RELEASE</version>
+		<version>1.4.3.RELEASE</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 
@@ -22,7 +22,27 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>1.8</java.version>
+
+		<!-- Override version from bundle to use some Java 8 features from 3.6.x -->
+		<assertj-core.version>3.6.1</assertj-core.version>
+
+		<!-- Application deploying properties -->
+		<project.deploy.server.protocol>http</project.deploy.server.protocol>
+		<project.deploy.server.address>tests.parseq.pro</project.deploy.server.address>
+		<project.deploy.server.port>8080</project.deploy.server.port>
+		<project.deploy.server.name>parseq-test-server</project.deploy.server.name>
+		<project.deploy.server.username>tomcat</project.deploy.server.username>
+		<project.deploy.server.password>tomcat</project.deploy.server.password>
+		<project.deploy.server.path>/ghop-core</project.deploy.server.path>
 	</properties>
+	
+	<repositories>
+        <repository>
+            <id>artifactory</id>
+            <name>Parseq Lab Artifactory</name>
+            <url>http://maven.corp.parseq.pro:8081/artifactory/libs-release-local</url>
+        </repository>
+    </repositories>
 
 	<dependencies>
 		<dependency>
@@ -41,18 +61,28 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-web</artifactId>
+			<groupId>org.assertj</groupId>
+			<artifactId>assertj-core</artifactId>
+			<version>${assertj-core.version}</version><!--$NO-MVN-MAN-VER$-->
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-hateoas</artifactId>
 		</dependency>
+		
 		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-configuration-processor</artifactId>
-			<optional>true</optional>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.4</version>
+        </dependency>
+		
+		<!-- Internally developed artifacts -->
+		<dependency>
+		    <groupId>pro.parseq</groupId>
+		    <artifactId>vcf-explorer</artifactId>
+		    <version>1.0.0-RELEASE</version>
 		</dependency>
+
 	</dependencies>
 
 	<build>
@@ -60,6 +90,20 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+
+			<!-- Using plugin for Tomcat 7 as https://issues.apache.org/jira/browse/MTOMCAT-234 -->
+			<plugin>
+				<groupId>org.apache.tomcat.maven</groupId>
+				<artifactId>tomcat7-maven-plugin</artifactId>
+				<version>2.2</version>
+				<configuration>
+					<url>${project.deploy.server.protocol}://${project.deploy.server.address}:${project.deploy.server.port}/manager/text</url>
+					<server>${project.deploy.server.name}</server>
+					<username>${project.deploy.server.username}</username>
+					<password>${project.deploy.server.password}</password>
+					<path>${project.deploy.server.path}</path>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>

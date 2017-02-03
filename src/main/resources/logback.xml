@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
+<!-- configuration file for LogBack (slf4J implementation)
+    See here for more details: 
+    http://gordondickens.com/wordpress/2013/03/27/sawing-through-the-java-loggers/ -->
+<configuration scan="true" scanPeriod="30 seconds">
+
+    <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
+        <resetJUL>true</resetJUL>
+    </contextListener>
+
+    <!-- To enable JMX Management -->
+    <jmxConfigurator/>
+
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%-5level %logger{0} - %msg%n</pattern>
+        </encoder>
+    </appender>
+    
+    <timestamp key="timestamp" datePattern="yyyyMMdd'T'HHmmss"/>
+    <appender name="file" class="ch.qos.logback.core.FileAppender">
+        <file>/tmp/log-${timestamp}.log</file>
+        <encoder>
+            <pattern>%-5level %logger{0} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Tune loggers -->
+    <logger name="pro.parseq.ghop.datasources.AbstractDataSource" level="debug" />
+    <logger name="pro.parseq.ghop.datasources.VcfFileDataSource" level="debug" />
+    <logger name="pro.parseq.ghop.datasources.VcfFileDataSourceTest" level="debug" />
+         
+    <root level="info">
+        <appender-ref ref="console"/>
+        <!-- appender-ref ref="file"/ -->
+    </root>
+    
+</configuration>

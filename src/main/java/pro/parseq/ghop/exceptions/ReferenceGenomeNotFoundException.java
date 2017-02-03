@@ -1,21 +1,19 @@
 package pro.parseq.ghop.exceptions;
 
-import pro.parseq.ghop.entities.ReferenceGenome;
-
 public class ReferenceGenomeNotFoundException extends RuntimeException {
 
 	private static final long serialVersionUID = 7616074261125595081L;
 
-	private final ReferenceGenome referenceGenome;
+	private final String referenceGenomeName;
 
-	public ReferenceGenomeNotFoundException(ReferenceGenome referenceGenome) {
+	public ReferenceGenomeNotFoundException(String referenceGenomeName) {
 
-		super(String.format("Reference genome not found: %s", referenceGenome));
+		super(String.format("Reference genome not found: %s", referenceGenomeName));
 
-		this.referenceGenome = referenceGenome;
+		this.referenceGenomeName = referenceGenomeName;
 	}
 
-	public ReferenceGenome getReferenceGenome() {
-		return referenceGenome;
+	public String getReferenceGenomeName() {
+		return referenceGenomeName;
 	}
 }

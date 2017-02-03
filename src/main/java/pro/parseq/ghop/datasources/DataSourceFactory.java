@@ -6,25 +6,27 @@ import java.util.Comparator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import pro.parseq.ghop.entities.ReferenceGenome;
 import pro.parseq.ghop.entities.Track;
 import pro.parseq.ghop.utils.GenomicCoordinate;
 
-/**
- * Factory to instantiate data sources in runtime
- * 
- * @author Alexander Afanasyev <a href="mailto:aafanasyev@parseq.pro">aafanasyev@parseq.pro</a>
- */
 @Component
 public class DataSourceFactory {
 
 	@Autowired
 	private Comparator<GenomicCoordinate> comparator;
 
-	public BedFileDataSource newBedFileDataSourceInstance(Track track,
-			InputStream bedFile, ReferenceGenome referenceGenome) {
-		return new BedFileDataSource(track, bedFile, referenceGenome, comparator);
+	public BasicBedFileDataSource basicBedFileDataSourceInstance(Track track,
+			InputStream bed, String referenceGenomeName) {
+		return new BasicBedFileDataSource(track, bed, comparator, referenceGenomeName);
 	}
 
-	// TODO: add more data source implementation instantiation methods
+	public VariantsBedFileDataSource variantsBedFileDataSourceInstance(Track track,
+			InputStream bed, String referenceGenomeName) {
+		return new VariantsBedFileDataSource(track, bed, comparator, referenceGenomeName);
+	}
+
+	public VcfFileDataSource vcfFileDataSourceInstance(Track track,
+			InputStream vcf, String referenceGenomeName) {
+		return new VcfFileDataSource(track, vcf, comparator, referenceGenomeName);
+	}
 }

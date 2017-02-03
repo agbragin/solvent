@@ -5,7 +5,6 @@ import java.util.Set;
 
 import pro.parseq.ghop.entities.Contig;
 import pro.parseq.ghop.entities.ReferenceGenome;
-import pro.parseq.ghop.exceptions.ReferenceGenomeNotFoundException;
 
 /**
  * Service contract to access reference genomes' information
@@ -22,11 +21,11 @@ public interface ReferenceService {
 	Set<ReferenceGenome> getReferenceGenomes();
 
 	/**
-	 * Lists contigs for specified reference genome
+	 * Lists contigs for specified reference genome (order is critical - it would be used to compare genomic coordinates)
 	 * 
-	 * @param referenceGenome {@link ReferenceGenome} to list contigs for
+	 * @param referenceGenomeName Reference genome to list contigs for
 	 * @return {@link List} of {@link Contig} for specified reference genome
 	 * @throws ReferenceGenomeNotFoundException if specified reference genome is not in the set of available reference genomes
 	 */
-	List<Contig> getContigs(ReferenceGenome referenceGenome);
+	List<Contig> getContigs(String referenceGenomeName);
 }

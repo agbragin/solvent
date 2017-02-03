@@ -16,10 +16,10 @@ import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import pro.parseq.ghop.configs.RefserviceConfig;
 import pro.parseq.ghop.entities.Contig;
 import pro.parseq.ghop.entities.ReferenceGenome;
 import pro.parseq.ghop.exceptions.ReferenceGenomeNotFoundException;
+import pro.parseq.ghop.services.configs.RefserviceConfig;
 
 /**
  * {@link ReferenceService} implementation based on refservice web-service
@@ -48,30 +48,30 @@ public class ReferenceWebService implements ReferenceService {
 
 	@Override
 	@Cacheable("referenceGenomes")
-	public List<Contig> getContigs(ReferenceGenome referenceGenome) {
+	public List<Contig> getContigs(String referenceGenomeName) {
 
 		try {
 
 			ParameterizedTypeReference<List<Contig>> responseType =
 					new ParameterizedTypeReference<List<Contig>>() {};
 			ResponseEntity<List<Contig>> response = restTemplate
-					.exchange(referenceUri(referenceGenome), HttpMethod.GET, null, responseType);
+					.exchange(referenceUri(referenceGenomeName), HttpMethod.GET, null, responseType);
 
 			return response.getBody();
 		} catch (HttpStatusCodeException e) {
 			if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
-				throw new ReferenceGenomeNotFoundException(referenceGenome);
+				throw new ReferenceGenomeNotFoundException(referenceGenomeName);
 			} else {
 				throw e;
 			}
 		}
 	}
 
-	private URI referenceUri(ReferenceGenome referenceGenome) {
+	private URI referenceUri(String referenceGenomeName) {
 
 		return refserviceRoot()
 				.pathSegment(config.getReferencesEndpoint())
-				.pathSegment(referenceGenome.getId())
+				.pathSegment(referenceGenomeName)
 				.build().encode()
 				.toUri();
 	}

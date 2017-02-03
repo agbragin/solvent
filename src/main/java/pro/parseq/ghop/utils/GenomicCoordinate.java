@@ -1,5 +1,10 @@
 package pro.parseq.ghop.utils;
 
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import pro.parseq.ghop.entities.Contig;
 
 public class GenomicCoordinate {
@@ -9,6 +14,13 @@ public class GenomicCoordinate {
 
 	public GenomicCoordinate(Contig contig, long coord) {
 		this.contig = contig;
+		this.coord = coord;
+	}
+
+	@JsonCreator
+	public GenomicCoordinate(@JsonProperty("genome") String referenceGenomeId,
+			@JsonProperty("contig") String contigId, @JsonProperty("coord") long coord) {
+		contig = new Contig(referenceGenomeId, contigId);
 		this.coord = coord;
 	}
 
@@ -39,7 +51,11 @@ public class GenomicCoordinate {
 
 	@Override
 	public int hashCode() {
-		return toString().hashCode();
+
+		return new HashCodeBuilder(29, 2017)
+				.append(contig)
+				.append(coord)
+				.toHashCode();
 	}
 
 	@Override

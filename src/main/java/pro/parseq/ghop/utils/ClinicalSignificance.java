@@ -1,0 +1,14 @@
+package pro.parseq.ghop.utils;
+
+public enum ClinicalSignificance {
+
+	UNCERTAIN_SIGNIFICANCE,
+	NOT_PROVIDED,
+	BENIGN,
+	LIKELY_BENIGN,
+	LIKELY_PATHOGENIC,
+	PATHOGENIC,
+	DRUG_RESPONSE,
+	HISTOCOMPATIBILITY,
+	OTHER
+}

@@ -2,8 +2,11 @@ package pro.parseq.ghop.entities;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+@JsonInclude(Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Contig {
 
@@ -16,7 +19,7 @@ public class Contig {
 	private ReferenceGenome referenceGenome;
 
 	private String id;
-	private long length;
+	private Long length;
 
 	protected Contig() {}
 
@@ -41,6 +44,11 @@ public class Contig {
 		this.length = length;
 	}
 
+	public Contig(String referenceGenomeId, String id) {
+		referenceGenome = new ReferenceGenome(referenceGenomeId);
+		this.id = id;
+	}
+
 	public ReferenceGenome getReferenceGenome() {
 		return referenceGenome;
 	}
@@ -57,11 +65,11 @@ public class Contig {
 		this.id = id;
 	}
 
-	public long getLength() {
+	public Long getLength() {
 		return length;
 	}
 
-	public void setLength(long length) {
+	public void setLength(Long length) {
 		this.length = length;
 	}
 

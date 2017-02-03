@@ -1,97 +1,108 @@
 package pro.parseq.ghop.datasources;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.sound.midi.Track;
+
+import org.springframework.hateoas.Identifiable;
+
+import pro.parseq.ghop.datasources.attributes.Attribute;
+import pro.parseq.ghop.datasources.filters.FilterQuery;
 import pro.parseq.ghop.entities.Band;
-import pro.parseq.ghop.entities.Track;
-import pro.parseq.ghop.utils.Filters;
 import pro.parseq.ghop.utils.GenomicCoordinate;
 
 /**
- * Data source adapter class (all performance responsibilities lay on it's realization)
+ * Source of genomic bands and their coordinates.  
  * 
- * @author Alexander Afanasyev <a href="mailto:aafanasyev@parseq.pro">aafanasyev@parseq.pro</a>
+ * @author aafanasyev, abragin
+ *
  */
-public abstract class DataSource {
+public interface DataSource<T extends Band> extends Identifiable<Long> {
 
 	/**
-	 * @return {@link Track} data source belongs to
+	 * Returns data source's type
+	 * 
+	 * @return {@link DataSourceType}
 	 */
-	public abstract Track track();
+	DataSourceType getType();
 
 	/**
-	 * Returns ascending ordered list of data source objects' borders lying to the left of the given coordinate
+	 * Returns a data source with filter applied.
+	 * 
+	 * @param query {@link FilterQuery} for target bands to build a data source over them
+	 * @return {@link DataSourceImpl} over the filtered {@link Band}s
+	 */
+	DataSource<T> filter(FilterQuery query);
+
+	/**
+	 * Returns a set of available data source attributes to filter bands by.
+	 * 
+	 * @return {@link Set} of available {@link Attribute}s to filter {@link Band}s by
+	 */
+	Set<Attribute<?>> attributes();
+
+	/**
+	 * Returns list of data source object borders to the left of the given coordinate in ascending order.
+	 * 
+	 * The original coordinate is not included into the count.
 	 * 
 	 * @param count Borders count to return
 	 * @param coord Given genomic coordinate
-	 * @param filters {@link Track} filters to define target objects to look borders of
 	 * @return {@link GenomicCoordinate} object borders list lying to the left of the given for specified parameters
 	 */
-	public abstract List<GenomicCoordinate> leftBorders(int count, GenomicCoordinate coord, Filters filters);
+	List<GenomicCoordinate> leftBorders(int count, GenomicCoordinate coord);
 
 	/**
-	 * Returns ascending ordered list of data source objects' borders lying to the right of the given coordinate
+	 * Returns list of data source objects borders lying to the right of the given coordinate in ascending order. 
+	 * 
+	 * The original coordinate is not included into the count.
 	 * 
 	 * @param count Borders count to return
 	 * @param coord Given genomic coordinate
-	 * @param filters {@link Track} filters to define target objects to look borders of
 	 * @return {@link GenomicCoordinate} object borders list lying to the right of the given for specified parameters
 	 */
-	public abstract List<GenomicCoordinate> rightBorders(int count, GenomicCoordinate coord, Filters filters);
+	List<GenomicCoordinate> rightBorders(int count, GenomicCoordinate coord);
 
 	/**
-	 * Obtain data source objects "generating" the given border (i.e. data source objects whose one of the borders equals to the given coordinate)
+	 * Obtain data source objects generating the border provided.
+	 * 
+	 *  Include i.e. data source objects whose one of the borders equals to the given coordinate.
 	 * 
 	 * @param coord Genomic coordinate representing the border
 	 * @param filters {@link Track} filters to define target objects
 	 * @return {@link Band} {@link Set} "generating" the given border
 	 */
-	public abstract Set<Band> borderGenerants(GenomicCoordinate coord, Filters filters);
+	Set<T> borderGenerants(GenomicCoordinate coord);
 
 	/**
-	 * Obtain data source objects "covering" the given coordinate
+	 * Obtain data source objects intersecting the given coordinate.
 	 * 
 	 * @param coord Genomic coordinate to look "coverage" for
-	 * @param filters {@link Track} filters to define target objects
 	 * @return {@link Band} {@link Set} "covering" the given coordinate
 	 */
-	public abstract Set<Band> coverage(GenomicCoordinate coord, Filters filters);
+	Set<T> coverage(GenomicCoordinate coord);
 
 	/**
-	 * Obtain data source objects "generating" left borders
+	 * Obtain data source objects generating left borders.
 	 * 
-	 * @param count Left borders count
-	 * @param coord Given genomic coordinate
-	 * @param filters {@link Track} filters to define target objects
+	 * Bands forming the original coordinate are included.
+	 * 
+	 * @param count Count of left borders to retrieve generating bands to
+	 * @param coord Genomic coordinate
 	 * @return {@link Band} {@link Set} "generating" left borders (i.e. data source objects whose one of the borders equals to the given coordinate)
 	 */
-	public Set<Band> leftBordersGenerants(int count, GenomicCoordinate coord, Filters filters) {
-
-		Set<Band> generants = new HashSet<>();
-		for (GenomicCoordinate leftBorder: leftBorders(count, coord, filters)) {
-			generants.addAll(borderGenerants(leftBorder, filters));
-		}
-
-		return generants;
-	}
+	Set<T> leftBordersGenerants(int borderCount, GenomicCoordinate coord);
 
 	/**
-	 * Obtain data source objects "generating" right borders
+	 * Obtain data source objects generating right borders.
+	 * 
+	 * Bands forming the original coordinate are included.
 	 * 
 	 * @param count Right borders count
 	 * @param coord Given genomic coordinate
-	 * @param filters {@link Track} filters to define target objects
 	 * @return {@link Band} {@link Set} "generating" right borders (i.e. data source objects whose one of the borders equals to the given coordinate)
 	 */
-	public Set<Band> rightBordersGenerants(int count, GenomicCoordinate coord, Filters filters) {
+	Set<T> rightBordersGenerants(int borderCount, GenomicCoordinate coord);
 
-		Set<Band> generants = new HashSet<>();
-		for (GenomicCoordinate rightBorder: rightBorders(count, coord, filters)) {
-			generants.addAll(borderGenerants(rightBorder, filters));
-		}
-
-		return generants;
-	}
 }

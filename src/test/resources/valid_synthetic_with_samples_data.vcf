@@ -1,0 +1,13 @@
+##fileformat=VCFv0004.20000
+##DESCRIPTION=This is a valid test VCF file with samples data created only for testing purposes
+##INFO=<ID=LN,Number=1,Type=Integer,Description="Line number in the file (1-based)",Source="file",Version="latest">
+##INFO=<ID=DLN,Number=1,Type=Integer,Description="Data line number in the file (1-based)",Source="file",Version="latest">
+##INFO=<ID=AN,Number=A,Type=Integer,Description="Allele number (0-based)">
+##INFO=<ID=VAL,Number=.,Type=Flag,Description="Whether composed test data line is valid">
+##FILTER=<ID=dl2,Description="Second data line number (DLN)">
+##FILTER=<ID=l10,Description="Line number (LN) greater than 10">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	test_sample
+chr20	14370	rs6054257	G	A	29	PASS	LN=8;DLN=1;AN=0;VAL	GT	0/1
+chr20	17330	.	T	A	3	dl2;l10	LN=9;DLN=2;AN=0,1,2;	GT	1/1
+chr20	1110696	rs6040355	A	G,T	67.5	l10	LN=10;DLN=3;AN=0,1;VAL	GT	1/2

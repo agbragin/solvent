@@ -1,30 +1,38 @@
 package pro.parseq.ghop.rest;
 
-import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
-import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
-
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.hateoas.Link;
 import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.Resources;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import pro.parseq.ghop.datasources.DataSource;
 import pro.parseq.ghop.datasources.DataSourceFactory;
+import pro.parseq.ghop.datasources.DataSourceType;
 import pro.parseq.ghop.datasources.MasterDataSource;
+import pro.parseq.ghop.datasources.attributes.Attribute;
+import pro.parseq.ghop.datasources.filters.AttributeFilter;
+import pro.parseq.ghop.datasources.filters.FilterQuery;
 import pro.parseq.ghop.entities.ReferenceGenome;
 import pro.parseq.ghop.entities.Track;
+import pro.parseq.ghop.entities.TrackFilterQuery;
+import pro.parseq.ghop.exceptions.IllegalDataSourceTypeException;
 import pro.parseq.ghop.exceptions.TrackNotFoundException;
+import pro.parseq.ghop.utils.AttributeFilterUtils;
+import pro.parseq.ghop.utils.HateoasUtils;
 
 @RestController
 @RequestMapping("/tracks")
@@ -36,9 +44,17 @@ public class TrackController {
 	@Autowired
 	private DataSourceFactory dataSourceFactory;
 
+	@Autowired
+	private AttributeFilterUtils attributeFilterUtils;
+
 	@GetMapping
 	public Resources<Resource<Track>> getTracks() {
-		return trackResources(masterDataSource.getTracks());
+		return HateoasUtils.trackResources(masterDataSource.getTracks());
+	}
+
+	@DeleteMapping
+	public void removeAll() {
+		masterDataSource.removeAll();
 	}
 
 	/**
@@ -52,63 +68,148 @@ public class TrackController {
 	@RequestMapping("/{track}")
 	public Resource<Track> getTrack(@PathVariable Track track) {
 
-		if (!masterDataSource.getTracks().contains(track)) {
+		Track storedTrack = masterDataSource.getTrack(track.getName());
+		if (storedTrack == null) {
 			throw new TrackNotFoundException(track);
 		}
 
-		return trackResource(track);
-	}
-
-	/**
-	 * see previous method comment
-	 */
-	@RequestMapping(method = RequestMethod.POST, value = "/{bed}")
-	public Resource<Track> createTrack(@RequestParam Track track,
-			@RequestParam MultipartFile bed, @RequestParam("genome") ReferenceGenome referenceGenome) {
-
-		try {
-
-			masterDataSource.addDataSource(dataSourceFactory
-					.newBedFileDataSourceInstance(track, bed.getInputStream(),
-							referenceGenome));
-
-			return getTrack(track);
-		} catch (IOException e) {
-			throw new RuntimeException(String.format(
-					"I/O exception while BED file manipultaions: %s", e.getMessage()));
-		}
+		return HateoasUtils.trackResource(storedTrack);
 	}
 
 	@DeleteMapping("/{track}")
 	public Resource<Track> removeTrack(@PathVariable Track track) {
 
-		if (!masterDataSource.getTracks().contains(track)) {
+		Track storedTrack = masterDataSource.getTrack(track.getName());
+		if (storedTrack == null) {
 			throw new TrackNotFoundException(track);
 		}
 
-		return trackResource(masterDataSource.removeDataSource(track));
+		return HateoasUtils.trackResource(masterDataSource.removeTrack(storedTrack));
 	}
 
-	@DeleteMapping
-	public Resources<Resource<Track>> removeAll() {
-		return trackResources(masterDataSource.removeAll());
+	/**
+	 * At the controller level attributes are 'attached' to tracks
+	 * 
+	 * TODO: mb we should do it in a more natural way (as attributes come from data sources)?
+	 */
+	@RequestMapping("/{track}/attributes")
+	public Resources<Resource<Attribute<?>>> getTrackAttributes(@PathVariable Track track) {
+
+		Track storedTrack = masterDataSource.getTrack(track.getName());
+		if (storedTrack == null) {
+			throw new TrackNotFoundException(track);
+		}
+
+		return HateoasUtils.trackAttributeResources(storedTrack,
+				storedTrack.getDataSource().attributes());
 	}
 
-	private static final Resources<Resource<Track>> trackResources(Set<Track> tracks) {
+	@RequestMapping("/{track}/dataSource")
+	public Resource<DataSource<?>> getTrackDataSource(@PathVariable Track track) {
 
-		Link selfLink = linkTo(methodOn(TrackController.class)
-				.getTracks()).withSelfRel();
-		Set<Resource<Track>> trackResources = tracks.stream()
-				.map(track -> trackResource(track)).collect(Collectors.toSet());
+		Track storedTrack = masterDataSource.getTrack(track.getName());
+		if (storedTrack == null) {
+			throw new TrackNotFoundException(track);
+		}
 
-		return new Resources<>(trackResources, selfLink);
+		return HateoasUtils.dataSourceResource(storedTrack.getDataSource());
 	}
 
-	private static final Resource<Track> trackResource(Track track) {
+	@RequestMapping("/{track}/filters")
+	public Resources<Resource<DataSource<?>>> getTrackFilters(@PathVariable Track track) {
 
-		Link selfLink = linkTo(methodOn(TrackController.class)
-				.getTrack(track)).withSelfRel();
+		Track storedTrack = masterDataSource.getTrack(track.getName());
+		if (storedTrack == null) {
+			throw new TrackNotFoundException(track);
+		}
 
-		return new Resource<>(track, selfLink);
+		return HateoasUtils.trackDataSourceResources(storedTrack,
+				storedTrack.getFilters().values().stream()
+						.collect(Collectors.toSet()));
+	}
+
+	// TODO: make it possible to pass attribute URI instead of it's id
+	@PostMapping("/{track}/filters")
+	public Resource<DataSource<?>> createTrackFilter(@PathVariable Track track,
+			@RequestBody TrackFilterQuery query) {
+
+		Track storedTrack = masterDataSource.getTrack(track.getName());
+		if (storedTrack == null) {
+			throw new TrackNotFoundException(track);
+		}
+
+		List<AttributeFilter<?>> filters = query.getFilters().stream()
+				.map(attributeFilterUtils::buildAttributeFilter)
+				.collect(Collectors.toList());
+		FilterQuery filterQuery = new FilterQuery(filters, query.getAggregates());
+
+		DataSource<?> filteredDataSource = storedTrack.getDataSource().filter(filterQuery);
+		storedTrack.putFilter(filteredDataSource);
+
+		return HateoasUtils.dataSourceResource(filteredDataSource);
+	}
+
+	@DeleteMapping("/{track}/filters")
+	public Resources<Resource<DataSource<?>>> removeTrackFilters(@PathVariable Track track) {
+
+		Track storedTrack = masterDataSource.getTrack(track.getName());
+		if (storedTrack == null) {
+			throw new TrackNotFoundException(track);
+		}
+
+		Set<DataSource<?>> filters = storedTrack.getFilters().values()
+				.stream().collect(Collectors.toSet());
+		storedTrack.setFilters(new HashMap<>());
+
+		return HateoasUtils.trackFilterResources(storedTrack, filters);
+	}
+
+	@PostMapping(params = {
+			"genome", "track", "type"
+	})
+	public Resource<Track> createTrack(@RequestParam Track track,
+			@RequestParam("type") String dataSourceType, @RequestParam MultipartFile file,
+			@RequestParam("genome") ReferenceGenome referenceGenome) {
+
+		try {
+
+			/**
+			 * String to Enum conversion out-of-the-box doesn't work,
+			 * so now we need to pass data source type as a String
+			 * 
+			 * TODO: investigate this
+			 */
+			DataSourceType type = DataSourceType.getEnum(dataSourceType);
+			DataSource<?> dataSource;
+			switch (type) {
+			case VCF:
+				dataSource = dataSourceFactory.vcfFileDataSourceInstance(
+						track, file.getInputStream(), referenceGenome.getId());
+				break;
+
+			case VARIANTS_BED:
+				dataSource = dataSourceFactory.variantsBedFileDataSourceInstance(
+						track, file.getInputStream(), referenceGenome.getId());
+				break;
+
+			case BASIC_BED:
+				dataSource = dataSourceFactory.basicBedFileDataSourceInstance(
+						track, file.getInputStream(), referenceGenome.getId());
+				break;
+
+			default:
+				throw new RuntimeException("Yet unsupported data source type: " + type);
+			}
+
+			track.setDataSource(dataSource);
+			masterDataSource.addTrack(track);
+
+			return getTrack(track);
+		} catch (IllegalArgumentException e) {
+			throw new IllegalDataSourceTypeException(dataSourceType);
+		} catch (IOException e) {
+			throw new RuntimeException(String.format(
+					"I/O exception while BED file manipultaions: %s", e.getMessage()));
+		}
 	}
 }

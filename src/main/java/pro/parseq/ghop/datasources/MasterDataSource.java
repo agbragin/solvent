@@ -1,6 +1,7 @@
 package pro.parseq.ghop.datasources;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -9,31 +10,81 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Component;
 
+import pro.parseq.ghop.datasources.attributes.Attribute;
 import pro.parseq.ghop.entities.Band;
 import pro.parseq.ghop.entities.Track;
 import pro.parseq.ghop.utils.GenomicCoordinate;
-import pro.parseq.ghop.utils.Query;
 
-/**
- * Data sources' master, that makes available to perform queries for objects from them
- * 
- * @author Alexander Afanasyev <a href="mailto:aafanasyev@parseq.pro">aafanasyev@parseq.pro</a>
- */
 @Component
 public class MasterDataSource {
 
-	/**
-	 * In this straightforward implementation we keep information about data sources in this map
-	 */
-	private Map<Track, DataSource> dataSources = new HashMap<>();
+	private Map<String, Track> tracks = new HashMap<>();
 
 	@Autowired
 	private Comparator<GenomicCoordinate> comparator;
+
+	public Set<Track> getTracks() {
+		return tracks.keySet().stream().map(tracks::get).collect(Collectors.toSet());
+	}
+
+	public Track getTrack(String trackName) {
+		return tracks.get(trackName);
+	}
+
+	public Track addTrack(Track track) {
+		return tracks.put(track.getName(), track);
+	}
+
+	public Track removeTrack(Track track) {
+		return tracks.remove(track);
+	}
+
+	public Set<DataSource<? extends Band>> getDataSources() {
+
+		return Stream.concat(
+						tracks.values().stream().map(Track::getDataSource),
+						tracks.values().stream().map(Track::getFilters)
+								.map(Map::values).flatMap(Collection::stream))
+				.collect(Collectors.toSet());
+	}
+
+	public DataSource<? extends Band> getDataSource(long id) {
+
+		return getDataSources().stream()
+				.filter(ds -> ds.getId().equals(id))
+				.findAny().orElse(null);
+	}
+
+	public Set<Attribute<?>> getAttributes() {
+
+		return getDataSources().stream()
+				.map(DataSource::attributes)
+				.flatMap(Collection::stream)
+				.collect(Collectors.toSet());
+	}
+
+	public Attribute<?> getAttribute(long id) {
+
+		return getAttributes().stream()
+				.filter(a -> a.getId().equals(id))
+				.findAny().orElse(null);
+	}
+
+	/**
+	 * Note, that invocation of this method will evict cache associated with reference genomes information
+	 * 
+	 * TODO: it's wrong to do this here, change cache eviction logic
+	 */
+	@CacheEvict("referenceGenomes")
+	public void removeAll() {
+		tracks = new HashMap<>();
+	}
 
 	/**
 	 * This is straightforward dummy implementation
@@ -43,10 +94,10 @@ public class MasterDataSource {
 	/**
 	 * Query for data sources' objects
 	 * 
-	 * @param query {@link Query} for objects (encapsulates information about track filters, correlations etc.)
+	 * @param query {@link QueryForBands} (encapsulates information about bearing coordinate, tracks correlation etc.)
 	 * @return {@link Band} {@link Set} for present query
 	 */
-	public Set<Band> getBands(Query query) {
+	public Set<? extends Band> getBands(QueryForBands query) {
 
 		// Band collection from each source for the present query
 		Set<Band> bands = new HashSet<>();
@@ -54,27 +105,24 @@ public class MasterDataSource {
 		Set<Band> coverage = new HashSet<>();
 		// Coordinate collection of all bands defined above
 		Set<GenomicCoordinate> coords = new HashSet<>();
-		for (Track track: query.getTrackSettings().getTracks()) {
+		for (DataSource<? extends Band> dataSource: query.getDataSources()) {
 
 			// Retrieve track's coordinate coverage
-			Set<Band> trackCoverage = dataSources.get(track).coverage(
-					query.getCoord(), query.getTrackSettings().getTrackFilters(track));
+			Set<? extends Band> trackCoverage = dataSource.coverage(query.getCoord());
 			trackCoverage.stream().forEach(band -> {
 				coords.add(band.getStartCoord());
 				coords.add(band.getEndCoord());
 			});
 			// Retrieve track's next bands' coordinates
-			Set<Band> trackNextBands = dataSources.get(track).rightBordersGenerants(
-					query.getRight(), query.getCoord(),
-					query.getTrackSettings().getTrackFilters(track));
+			Set<? extends Band> trackNextBands = dataSource
+					.rightBordersGenerants(query.getRight(), query.getCoord());
 			trackNextBands.stream().forEach(band -> {
 				coords.add(band.getStartCoord());
 				coords.add(band.getEndCoord());
 			});
 			// Retrieve track's previous bands' coordinates
-			Set<Band> trackPrevBands = dataSources.get(track).leftBordersGenerants(
-					query.getLeft(), query.getCoord(),
-					query.getTrackSettings().getTrackFilters(track));
+			Set<? extends Band> trackPrevBands = dataSource
+					.leftBordersGenerants(query.getLeft(), query.getCoord());
 			trackPrevBands.stream().forEach(band -> {
 				coords.add(band.getStartCoord());
 				coords.add(band.getEndCoord());
@@ -133,31 +181,5 @@ public class MasterDataSource {
 		}
 
 		return output;
-	}
-
-	public DataSource addDataSource(DataSource dataSource) {
-		return dataSources.put(dataSource.track(), dataSource);
-	}
-
-	public Track removeDataSource(Track track) {
-		return dataSources.remove(track).track();
-	}
-
-	/**
-	 * Note, that invocation of this method will evict cache associated with reference genomes information
-	 * 
-	 * TODO: it's wrong to do this here, change cache eviction logic
-	 */
-	@CacheEvict("referenceGenomes")
-	public Set<Track> removeAll() {
-
-		Set<Track> removedTracks = dataSources.keySet();
-		dataSources = new HashMap<>();
-
-		return removedTracks;
-	}
-
-	public Set<Track> getTracks() {
-		return dataSources.keySet();
 	}
 }

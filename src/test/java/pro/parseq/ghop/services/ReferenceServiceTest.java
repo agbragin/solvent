@@ -1,10 +1,7 @@
 package pro.parseq.ghop.services;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
-
-import java.util.List;
-import java.util.Set;
+import static org.assertj.core.api.Assertions.fail;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -20,35 +17,29 @@ import pro.parseq.ghop.exceptions.ReferenceGenomeNotFoundException;
 @SpringBootTest
 public class ReferenceServiceTest {
 
+	private static final String TEST_REFERENCE = "TestReference";
+	private static final String UNKNOWN_REFERENCE = "TotallyUnknown";
+	private static final String SOMEBIGCONTIG = "somebigcontig";
+
 	@Autowired
 	private ReferenceService referenceService;
 
 	@Test
-	public void testReferenceGenomes() throws Exception {
-
-		Set<ReferenceGenome> referenceGenomes = referenceService.getReferenceGenomes();
-
-		ReferenceGenome testReference = new ReferenceGenome("TestReference");
-		assertThat(referenceGenomes).contains(testReference);
+	public void testAvailableReferenceGenomes() throws Exception {
+		assertThat(referenceService.getReferenceGenomes()).contains(new ReferenceGenome(TEST_REFERENCE));
 	}
 
 	@Test
-	public void testReferenceGenomeContigs() throws Exception {
-
-		ReferenceGenome testReference = new ReferenceGenome("TestReference");
-		Contig somebigcontig = new Contig(testReference, "somebigcontig", 0);
-		List<Contig> contigs = referenceService.getContigs(testReference);
-
-		assertThat(contigs).containsExactly(somebigcontig);
+	public void testAvailableTestReferenceGenomeContigs() throws Exception {
+		assertThat(referenceService.getContigs(TEST_REFERENCE)).containsExactly(new Contig(TEST_REFERENCE, SOMEBIGCONTIG));
 	}
 
 	@Test
-	public void testUnknownReferenceGenomeContigs() throws Exception {
+	public void testAvailableUnknownReferenceGenomeContigs() throws Exception {
 
-		ReferenceGenome unknownReference = new ReferenceGenome("unknown");
 		try {
-			referenceService.getContigs(unknownReference);
-			fail("Should throw ReferenceGenomeNotFoundException on unknown genome");
+			referenceService.getContigs(UNKNOWN_REFERENCE);
+			fail("Requesting contig list for unknown reference genome should cause an exception!");
 		} catch (ReferenceGenomeNotFoundException e) {}
 	}
 }

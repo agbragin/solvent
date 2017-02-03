@@ -1,16 +1,18 @@
 package pro.parseq.ghop.utils;
 
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import pro.parseq.ghop.entities.Contig;
 import pro.parseq.ghop.entities.ReferenceGenome;
-import pro.parseq.ghop.exceptions.ContigNotFoundException;
-import pro.parseq.ghop.exceptions.ReferenceGenomeNotFoundException;
+import pro.parseq.ghop.exceptions.UnknownContigException;
+import pro.parseq.ghop.exceptions.UnknownReferenceGenomeException;
 import pro.parseq.ghop.services.ReferenceService;
 
 @Component
@@ -22,69 +24,70 @@ public class GenomicCoordinateComparator implements Comparator<GenomicCoordinate
 	@Override
 	public int compare(GenomicCoordinate o1, GenomicCoordinate o2) {
 
-		int referenceGenomesComparisonResult = referenceGenomesComparison(
+		int referenceGenomesComparisonResult = referenceGenomeNamesComparison(
 				o1.getContig().getReferenceGenome().getId(),
 				o2.getContig().getReferenceGenome().getId());
 		if (referenceGenomesComparisonResult != 0) {
 			return referenceGenomesComparisonResult;
 		}
-		int contigsComparisonResult = contigsComparison(
+		int contigsComparisonResult = contigNamesComparison(
 				o1.getContig().getId(), o2.getContig().getId(),
 				o1.getContig().getReferenceGenome().getId());
 		if (contigsComparisonResult != 0) {
 			return contigsComparisonResult;
 		}
 
-		return coordinatesComparison(o1.getCoord(), o2.getCoord());
+		return ((Long) o1.getCoord()).compareTo(o2.getCoord());
 	}
 
-	private int coordinatesComparison(long c1, long c2) {
+	private int referenceGenomeNamesComparison(String rg1, String rg2) {
 
-		if (c1 == c2) {
-			return 0;
-		}
-		if (c1 < c2) {
-			return -1;
-		} else {
-			return 1;
+		// This will validate specified genomes names and throw exception if fail
+		referenceGenomeNamesValidation(rg1, rg2);
+
+		return comparisonNormalizer(rg1.compareTo(rg2));
+	}
+
+	private int contigNamesComparison(String c1, String c2, String rg) {
+
+		// This will validate specified contig names and throw exception if fail
+		contigNamesValidation(rg, c1, c2);
+
+		List<String> availableContigs = referenceService.getContigs(rg)
+				.stream().map(Contig::getId).collect(Collectors.toList());
+		Integer c1Idx = availableContigs.indexOf(c1);
+		Integer c2Idx = availableContigs.indexOf(c2);
+
+		return c1Idx.compareTo(c2Idx);
+	}
+
+	private void referenceGenomeNamesValidation(String... referenceGenomeNames) {
+		Arrays.asList(referenceGenomeNames).stream().forEach(this::referenceGenomeNameValidation);
+	}
+
+	private void referenceGenomeNameValidation(String referenceGenomeName) {
+
+		Set<String> availableReferenceGenomes = referenceService.getReferenceGenomes()
+				.stream().map(ReferenceGenome::getId).collect(Collectors.toSet());
+		if (!availableReferenceGenomes.contains(referenceGenomeName)) {
+			throw new UnknownReferenceGenomeException(referenceGenomeName, availableReferenceGenomes);
 		}
 	}
 
-	private int referenceGenomesComparison(String r1, String r2) {
-
-		Set<ReferenceGenome> availableReferenceGenomes = referenceService.getReferenceGenomes();
-		ReferenceGenome referenceGenome1 = new ReferenceGenome(r1);
-		ReferenceGenome referenceGenome2 = new ReferenceGenome(r2);
-		if (!availableReferenceGenomes.contains(referenceGenome1)) {
-			throw new ReferenceGenomeNotFoundException(referenceGenome1);
-		}
-		if (!availableReferenceGenomes.contains(referenceGenome2)) {
-			throw new ReferenceGenomeNotFoundException(referenceGenome2);
-		}
-
-		return stringComparisonNormalizer(r1.compareTo(r2));
+	private void contigNamesValidation(String referenceGenomeName, String... contigNames) {
+		Arrays.asList(contigNames).stream().forEach(contigName -> contigNameValidation(contigName, referenceGenomeName));
 	}
 
-	private int contigsComparison(String c1, String c2, String r) {
+	private void contigNameValidation(String contigName, String referenceGenomeName) {
 
-		List<Contig> availableContigs = referenceService.getContigs(new ReferenceGenome(r));
-		ReferenceGenome referenceGenome = new ReferenceGenome(r);
-		Contig contig1 = new Contig(referenceGenome, c1, 0);
-		Contig contig2 = new Contig(referenceGenome, c2, 0);
-		if (!availableContigs.contains(contig1)) {
-			throw new ContigNotFoundException(contig1);
+		List<String> availableContigs = referenceService.getContigs(referenceGenomeName)
+				.stream().map(Contig::getId).collect(Collectors.toList());
+		if (!availableContigs.contains(contigName)) {
+			throw new UnknownContigException(referenceGenomeName, contigName, availableContigs);
 		}
-		if (!availableContigs.contains(contig2)) {
-			throw new ContigNotFoundException(contig2);
-		}
-
-		Integer contig1Idx = availableContigs.indexOf(contig1);
-		Integer contig2Idx = availableContigs.indexOf(contig2);
-
-		return contig1Idx.compareTo(contig2Idx);
 	}
 
-	private static final int stringComparisonNormalizer(int comparisonResult) {
+	private static final int comparisonNormalizer(int comparisonResult) {
 
 		if (comparisonResult < 0) {
 			return -1;
