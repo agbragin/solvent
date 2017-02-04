@@ -3,6 +3,7 @@ package pro.parseq.ghop.utils;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -12,17 +13,14 @@ import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.Resources;
 
 import pro.parseq.ghop.datasources.DataSource;
+import pro.parseq.ghop.datasources.DataSourceType;
 import pro.parseq.ghop.datasources.QueryForBands;
 import pro.parseq.ghop.datasources.attributes.Attribute;
 import pro.parseq.ghop.entities.Band;
 import pro.parseq.ghop.entities.ReferenceGenome;
 import pro.parseq.ghop.entities.ReferenceGenomeContigs;
 import pro.parseq.ghop.entities.Track;
-import pro.parseq.ghop.rest.AttributeController;
-import pro.parseq.ghop.rest.BandController;
-import pro.parseq.ghop.rest.DataSourceController;
-import pro.parseq.ghop.rest.ReferenceController;
-import pro.parseq.ghop.rest.TrackController;
+import pro.parseq.ghop.rest.*;
 
 public class HateoasUtils {
 
@@ -177,5 +175,13 @@ public class HateoasUtils {
 				.withSelfRel();
 
 		return new Resources<>(bands, selfLink);
+	}
+
+	public static final Resources<DataSourceType> dataSourceTypeResources() {
+
+		Link selfLink = linkTo(methodOn(DataSourceTypeController.class)
+				.getDataSourceTypes()).withSelfRel();
+
+		return new Resources<>(Arrays.asList(DataSourceType.values()), selfLink);
 	}
 }

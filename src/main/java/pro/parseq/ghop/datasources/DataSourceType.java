@@ -1,5 +1,8 @@
 package pro.parseq.ghop.datasources;
 
+import org.springframework.hateoas.core.Relation;
+
+@Relation(collectionRelation = "dataSourceTypes")
 public enum DataSourceType {
 
 	BASIC_BED("basic_bed"),
