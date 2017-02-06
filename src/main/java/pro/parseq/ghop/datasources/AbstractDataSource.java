@@ -11,6 +11,8 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import pro.parseq.ghop.entities.Band;
 import pro.parseq.ghop.utils.GenomicCoordinate;
 
@@ -45,10 +47,12 @@ public abstract class AbstractDataSource<T extends Band> implements DataSource<T
 		logger.debug("Borders created: {}", borders);
 	}
 
+	@JsonIgnore
 	public List<T> getBands() {
 		return new ArrayList<>(bands);
 	}
 
+	@JsonIgnore
 	public Comparator<GenomicCoordinate> getComparator() {
 		return comparator;
 	}
