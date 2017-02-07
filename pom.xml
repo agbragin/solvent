@@ -35,14 +35,6 @@
 		<project.deploy.server.password>tomcat</project.deploy.server.password>
 		<project.deploy.server.path>/ghop-core</project.deploy.server.path>
 	</properties>
-	
-	<repositories>
-        <repository>
-            <id>artifactory</id>
-            <name>Parseq Lab Artifactory</name>
-            <url>http://maven.corp.parseq.pro:8081/artifactory/libs-release-local</url>
-        </repository>
-    </repositories>
 
 	<dependencies>
 		<dependency>
