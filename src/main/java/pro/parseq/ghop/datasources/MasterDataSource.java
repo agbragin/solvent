@@ -42,7 +42,7 @@ public class MasterDataSource {
 	}
 
 	public Track removeTrack(Track track) {
-		return tracks.remove(track);
+		return tracks.remove(track.getName());
 	}
 
 	public Set<DataSource<? extends Band>> getDataSources() {
