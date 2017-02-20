@@ -17,6 +17,102 @@
 		<version>1.4.3.RELEASE</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
+    
+    <profiles>
+        <profile>
+            <id>windows</id>
+            <activation>
+                <os>
+                    <family>windows</family>
+                </os>
+            </activation>
+            <properties>
+                <project.package.frontendBuildScript>install.cmd</project.package.frontendBuildScript>
+            </properties>
+        </profile>
+        <profile>
+            <id>unix</id>
+            <activation>
+                <os>
+                    <family>unix</family>
+                </os>
+            </activation>
+            <properties>
+                <!-- Note that in Linux we must explicitly specify current directory prefix -->
+                <project.package.frontendBuildScript>./install.sh</project.package.frontendBuildScript>
+            </properties>
+        </profile>
+        <!-- Profile that activates frontend components inclusion into the application -->
+        <profile>
+            <id>standalone</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                            <artifactId>exec-maven-plugin</artifactId>
+                            <!-- Clone frontend components sources -->
+                            <executions>
+                                <execution>
+                                    <id>clone-frontend</id>
+                                    <goals>
+                                        <goal>exec</goal>
+                                    </goals>
+                                    <phase>generate-resources</phase>
+                                    <configuration>
+                                        <executable>git</executable>
+                                        <workingDirectory>target</workingDirectory>
+                                        <arguments>
+                                            <argument>clone</argument>
+                                            <argument>--depth=1</argument>
+                                            <!-- Moving .git folder out of static components -->
+                                            <argument>--separate-git-dir</argument>
+                                            <argument>.git</argument>
+                                            <!-- TODO: change this after project transfer to GitHub -->
+                                            <argument>http://stash.corp.parseq.pro/stash/scm/sb/ghop-webclient.git</argument>
+                                            <argument>${project.build.finalName}/META-INF/resources</argument>
+                                        </arguments>
+                                    </configuration>
+                                </execution>
+                                <!-- Build frontend components sources -->
+                                <execution>
+                                    <id>frontend-build</id>
+                                    <goals>
+                                        <goal>exec</goal>
+                                    </goals>
+                                    <phase>process-resources</phase>
+                                    <configuration>
+                                        <executable>${project.package.frontendBuildScript}</executable>
+                                        <workingDirectory>target/${project.build.finalName}/META-INF/resources</workingDirectory>
+                                    </configuration>
+                                </execution>
+                            </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>com.google.code.maven-replacer-plugin</groupId>
+                        <artifactId>replacer</artifactId>
+                        <version>1.5.3</version>
+                        <executions>
+                            <!-- Replace backend URI in frontend sources -->
+                            <execution>
+                                <id>change-backend-uri</id>
+                                <goals>
+                                    <goal>replace</goal>
+                                </goals>
+                                <phase>generate-resources</phase>
+                                <configuration>
+                                    <file>target/${project.build.finalName}/META-INF/resources/js/app.js</file>
+                                    <outputFile>target/${project.build.finalName}/META-INF/resources/js/app.js</outputFile>
+                                    <regex>true</regex>
+                                    <token>let apiURI = '.+';</token>
+                                    <value>let apiURI = '';</value>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -99,6 +195,5 @@
 			</plugin>
 		</plugins>
 	</build>
-
 
 </project>
