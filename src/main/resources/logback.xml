@@ -27,8 +27,8 @@
     </appender>
 
     <!-- Tune loggers -->
-    <logger name="pro.parseq.ghop.datasources.AbstractDataSource" level="debug" />
-    <logger name="pro.parseq.ghop.datasources.VcfFileDataSource" level="debug" />
+    <logger name="pro.parseq.ghop.datasources.AbstractDataSource" level="info" />
+    <logger name="pro.parseq.ghop.datasources.VcfFileDataSource" level="info" />
     <logger name="pro.parseq.ghop.datasources.VcfFileDataSourceTest" level="debug" />
          
     <root level="info">

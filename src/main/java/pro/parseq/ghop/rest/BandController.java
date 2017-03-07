@@ -46,13 +46,12 @@ public class BandController {
 	private DataSourceUtils dataSourceUtils;
 
 	@GetMapping
-	public Resources<? extends Band> getBands(@RequestParam("genome") String referenceGenomeName,
-			@RequestParam("contig") String contigName, @RequestParam long coord,
-			@RequestParam int left, @RequestParam int right,
+	public Resources<? extends Band> getBands(@RequestParam("contig") String contigName,
+			@RequestParam long coord, @RequestParam int left, @RequestParam int right,
 			@RequestParam("dataSources") Set<String> dataSourceUris) {
 
 		QueryForBands query = new QueryForBands(
-				new GenomicCoordinate(referenceGenomeName, contigName, coord),
+				new GenomicCoordinate(masterDataSource.getReferenceGenome().getId(), contigName, coord),
 				left, right, dataSourceUris.stream()
 						.map(dataSourceUtils::retrieveDataSourceByUri)
 						.collect(Collectors.toSet()));

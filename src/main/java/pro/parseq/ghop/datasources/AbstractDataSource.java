@@ -81,7 +81,18 @@ public abstract class AbstractDataSource<T extends Band> implements DataSource<T
 	}
 
 	@Override
-	public List<GenomicCoordinate> leftBorders(int count, GenomicCoordinate coord) {
+	public Set<T> getBands(GenomicCoordinate coord, int left, int right) {
+
+		return Stream
+				.concat(
+						this.coverage(coord).stream(),
+						Stream.concat(
+								this.leftBordersGenerants(left, coord).stream(),
+								this.rightBordersGenerants(right, coord).stream()))
+				.collect(Collectors.toSet());
+	}
+
+	protected List<GenomicCoordinate> leftBorders(int count, GenomicCoordinate coord) {
 
 		int idx = Collections.binarySearch(borders, coord, comparator);
 		if (idx < 0) {
@@ -93,8 +104,8 @@ public abstract class AbstractDataSource<T extends Band> implements DataSource<T
 		}
 	}
 
-	@Override
-	public List<GenomicCoordinate> rightBorders(int count, GenomicCoordinate coord) {
+
+	protected List<GenomicCoordinate> rightBorders(int count, GenomicCoordinate coord) {
 
 		int idx = Collections.binarySearch(borders, coord, comparator);
 		if (idx < 0) {
@@ -108,8 +119,7 @@ public abstract class AbstractDataSource<T extends Band> implements DataSource<T
 		}
 	}
 
-	@Override
-	public Set<T> borderGenerants(GenomicCoordinate coord) {
+	protected Set<T> borderGenerants(GenomicCoordinate coord) {
 
 		return bands.stream()
 				.filter(band -> band.getStartCoord().equals(coord)
@@ -117,8 +127,7 @@ public abstract class AbstractDataSource<T extends Band> implements DataSource<T
 				.collect(Collectors.toSet());
 	}
 
-	@Override
-	public Set<T> coverage(GenomicCoordinate coord) {
+	protected Set<T> coverage(GenomicCoordinate coord) {
 
 		return bands.stream()
 				.filter(band -> comparator.compare(band.getStartCoord(), coord) != 1
@@ -126,16 +135,14 @@ public abstract class AbstractDataSource<T extends Band> implements DataSource<T
 				.collect(Collectors.toSet());
 	}
 
-	@Override
-	public Set<T> leftBordersGenerants(int borderCount, GenomicCoordinate coord) {
+	protected Set<T> leftBordersGenerants(int borderCount, GenomicCoordinate coord) {
 
 		return leftBorders(borderCount, coord).stream()
 				.flatMap(border -> borderGenerants(border).stream())
 				.collect(Collectors.toSet());
 	}
 
-	@Override
-	public Set<T> rightBordersGenerants(int borderCount, GenomicCoordinate coord) {
+	protected Set<T> rightBordersGenerants(int borderCount, GenomicCoordinate coord) {
 
 		return rightBorders(borderCount, coord).stream()
 				.flatMap(border -> borderGenerants(border).stream())

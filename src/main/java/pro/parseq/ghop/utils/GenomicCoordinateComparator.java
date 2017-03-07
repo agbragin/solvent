@@ -24,20 +24,19 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import pro.parseq.ghop.entities.Contig;
 import pro.parseq.ghop.entities.ReferenceGenome;
 import pro.parseq.ghop.exceptions.UnknownContigException;
 import pro.parseq.ghop.exceptions.UnknownReferenceGenomeException;
 import pro.parseq.ghop.services.ReferenceService;
 
-@Component
 public class GenomicCoordinateComparator implements Comparator<GenomicCoordinate> {
 
-	@Autowired
 	private ReferenceService referenceService;
+
+	public GenomicCoordinateComparator(ReferenceService referenceService) {
+		this.referenceService = referenceService;
+	}
 
 	@Override
 	public int compare(GenomicCoordinate o1, GenomicCoordinate o2) {

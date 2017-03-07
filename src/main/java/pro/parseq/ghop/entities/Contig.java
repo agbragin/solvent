@@ -115,6 +115,7 @@ public class Contig {
 
 	@Override
 	public String toString() {
+
 		return new StringBuilder()
 				.append(referenceGenome)
 				.append(":")

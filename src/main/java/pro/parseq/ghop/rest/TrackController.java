@@ -37,6 +37,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import pro.parseq.ghop.datasources.ChromosomeDataSource;
 import pro.parseq.ghop.datasources.DataSource;
 import pro.parseq.ghop.datasources.DataSourceFactory;
 import pro.parseq.ghop.datasources.DataSourceType;
@@ -44,6 +45,7 @@ import pro.parseq.ghop.datasources.MasterDataSource;
 import pro.parseq.ghop.datasources.attributes.Attribute;
 import pro.parseq.ghop.datasources.filters.AttributeFilter;
 import pro.parseq.ghop.datasources.filters.FilterQuery;
+import pro.parseq.ghop.entities.ChromosomeBand;
 import pro.parseq.ghop.entities.ReferenceGenome;
 import pro.parseq.ghop.entities.Track;
 import pro.parseq.ghop.entities.TrackFilterQuery;
@@ -55,6 +57,8 @@ import pro.parseq.ghop.utils.HateoasUtils;
 @RestController
 @RequestMapping("/tracks")
 public class TrackController {
+
+	private static final String CHROMOSOME_TRACK = "Chromosome";
 
 	@Autowired
 	private MasterDataSource masterDataSource;
@@ -182,12 +186,9 @@ public class TrackController {
 		return HateoasUtils.trackFilterResources(storedTrack, filters);
 	}
 
-	@PostMapping(params = {
-			"genome", "track", "type"
-	})
+	@PostMapping(params = { "track", "type" })
 	public Resource<Track> createTrack(@RequestParam Track track,
-			@RequestParam("type") String dataSourceType, @RequestParam MultipartFile file,
-			@RequestParam("genome") ReferenceGenome referenceGenome) {
+			@RequestParam("type") String dataSourceType, @RequestParam MultipartFile file) {
 
 		try {
 
@@ -201,18 +202,15 @@ public class TrackController {
 			DataSource<?> dataSource;
 			switch (type) {
 			case VCF:
-				dataSource = dataSourceFactory.vcfFileDataSourceInstance(
-						track, file.getInputStream(), referenceGenome.getId());
+				dataSource = dataSourceFactory.vcfFileDataSourceInstance(track, file.getInputStream());
 				break;
 
 			case VARIANTS_BED:
-				dataSource = dataSourceFactory.variantsBedFileDataSourceInstance(
-						track, file.getInputStream(), referenceGenome.getId());
+				dataSource = dataSourceFactory.variantsBedFileDataSourceInstance(track, file.getInputStream());
 				break;
 
 			case BASIC_BED:
-				dataSource = dataSourceFactory.basicBedFileDataSourceInstance(
-						track, file.getInputStream(), referenceGenome.getId());
+				dataSource = dataSourceFactory.basicBedFileDataSourceInstance(track, file.getInputStream());
 				break;
 
 			default:
@@ -229,5 +227,21 @@ public class TrackController {
 			throw new RuntimeException(String.format(
 					"I/O exception while BED file manipultaions: %s", e.getMessage()));
 		}
+	}
+
+	@PostMapping(params = { "genome" })
+	public Resource<Track> chooseGenome(@RequestParam("genome") ReferenceGenome referenceGenome) {
+
+		masterDataSource.setReferenceGenome(referenceGenome);
+
+		Track chromosomeTrack = new Track(CHROMOSOME_TRACK);
+		DataSource<ChromosomeBand> chromosomeDataSource = new ChromosomeDataSource(chromosomeTrack,
+				masterDataSource.getReferenceService().getContigs(referenceGenome.getId()),
+				masterDataSource.getComparator());
+
+		chromosomeTrack.setDataSource(chromosomeDataSource);
+		masterDataSource.addTrack(chromosomeTrack);
+
+		return getTrack(chromosomeTrack);
 	}
 }

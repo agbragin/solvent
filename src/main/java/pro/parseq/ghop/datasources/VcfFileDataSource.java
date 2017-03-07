@@ -28,6 +28,7 @@ import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -174,13 +175,13 @@ public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 
 			return vcfData.getVariants().stream()
 				.map(variant -> {
-
+					// Node that we perform conversion to ZBHO here
 					GenomicCoordinate startCoord = new GenomicCoordinate(
 							new Contig(referenceGenomeName, variant.getChrom()),
-							variant.getPos());
+							variant.getPos() - 1);
 					GenomicCoordinate endCoord = new GenomicCoordinate(
 							new Contig(referenceGenomeName, variant.getChrom()),
-							variant.getPos() + variant.getRef().length());
+							variant.getPos() + variant.getRef().length() - 1);
 
 					JsonNode properties = VcfFileDataSource.getProperties(vcfExplorer, variant);
 					String variantName = variant.getIds().stream()
@@ -245,26 +246,27 @@ public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 					}
 
 					break;
-
 				case "1":
 					// Single-value field
-					logger.debug("INFO value field: {}", infoKey);
+					if (infoValues == null) {
+						return;
+					}
+					
+					logger.debug("INFO value field: {}, values: {}", infoKey, infoValues);
 					Serializable value = infoValues.get(0);
 
 					switch (infoAttribute.getType()) {
 						case FLOAT:
 							properties.put(infoKey, (Double) value);
 							break;
-
 						case INTEGER:
 							properties.put(infoKey, (Integer) value);
 							break;
-
 						case CHARACTER:
+							/* Fall through */
 						case STRING:
 							properties.put(infoKey, (String) value);
 							break;
-
 						case FLAG:
 							/**
 							 * Maybe it is more reliable to do this
@@ -277,7 +279,6 @@ public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 							logger.error("INFO field {} typed as Flag has Number=1: {}",
 									infoKey, infoValues);
 							break;
-
 						default:
 							/**
 							 * In fact, this will never be reached, if VCF Explorer works properly,
@@ -285,16 +286,16 @@ public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 							 */
 							logger.error("Unknown INFO field type: {}", infoAttribute.getType());
 					}
-
 					break;
-
 				default:
 					/**
 					 * This validation is performed only because VCF Explorer
 					 * doesn't support per genotype number parameter value yet
-					 * 
-					 * TODO: get rid of this validation
 					 */
+					if (infoValues == null) {
+						return;
+					}
+					
 					if (!isMultiValueNumber(number)) {
 
 						logger.error("Field {} has unknown \"Number\" parameter: {}. "
@@ -310,22 +311,20 @@ public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 						case FLOAT:
 							infoValues.stream().forEach(it -> arrayNode.add((Double) it));
 							break;
-
 						case INTEGER:
 							infoValues.stream().forEach(it -> arrayNode.add((Integer) it));
 							break;
-
 						case CHARACTER:
+							/* Fall through */
 						case STRING:
 							infoValues.stream().forEach(it -> arrayNode.add((String) it));
 							break;
-
 						default:
 							/**
 							 * In fact, this will never be reached, if VCF Explorer works properly,
 							 * as it validate field type while parsing phase
 							 */
-							logger.error("Wrong array INFO field type: {}", infoAttribute.getType());
+							logger.error("Wrong array INFO field type: {}, array field: {}", infoAttribute.getType(), infoKey);
 					}
 			}
 		});
@@ -394,18 +393,16 @@ public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 										formatEntry.getValue().stream()
 												.forEach(it -> arrayNode.add((Double) it));
 										break;
-
 									case INTEGER:
 										formatEntry.getValue().stream()
 												.forEach(it -> arrayNode.add((Integer) it));
 										break;
-
 									case CHARACTER:
+										/* Fall through */
 									case STRING:
 										formatEntry.getValue().stream()
 												.forEach(it -> arrayNode.add((String) it));
 										break;
-
 									default:
 										/**
 										 * In fact, this will never be reached, if VCF Explorer works properly,
@@ -564,25 +561,22 @@ public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 				.description(description)
 				.build();
 			break;
-
 		case FLOAT:
 			attribute = new DoubleAttributeBuilder(name)
 				.description(description)
 				.build();
 			break;
-
 		case FLAG:
 			attribute = new BooleanAttributeBuilder(name)
 				.description(description)
 				.build();
 			break;
-
 		case CHARACTER:
+			/* Fall through */
 		case STRING:
 			attribute = createAttributeForValues(name, description,
 					values, MAX_ENUM_CATEGORIES);
 			break;
-
 		default:
 			throw new IllegalStateException(
 					String.format("Specified INFO field type is unknown: %s", type));
@@ -602,19 +596,16 @@ public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 				.description(description)
 				.build();
 			break;
-
 		case FLOAT:
 			attribute = new DoubleAttributeBuilder(name)
 				.description(description)
 				.build();
 			break;
-
 		case CHARACTER:
 		case STRING:
 			attribute = createAttributeForValues(name, description,
 					values, MAX_ENUM_CATEGORIES);
 			break;
-
 		default:
 			throw new IllegalStateException(
 					String.format("Specified INFO field type is unknown: %s", type));
@@ -635,6 +626,7 @@ public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 			return vcfFile.getVariants().stream()
 					// Get corresponding INFO field values for the given variant
 					.map(variant -> variant.getInfo().get(info.getId()))
+					.filter(Objects::nonNull)
 					// Flatten INFO values list
 					.flatMap((List<?> values) -> values.stream())
 					// Transforming VCF values to strings

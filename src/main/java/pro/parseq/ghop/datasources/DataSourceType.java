@@ -23,7 +23,9 @@ import org.springframework.hateoas.core.Relation;
 @Relation(collectionRelation = "dataSourceTypes")
 public enum DataSourceType {
 
+	CHROMOSOME("chromosome"),
 	BASIC_BED("basic_bed"),
+	REFERENCE("reference"),
 	VARIANTS_BED("variants_bed"),
 	VCF("vcf");
 	// etc.

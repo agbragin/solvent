@@ -64,6 +64,8 @@
                                         <arguments>
                                             <argument>clone</argument>
                                             <argument>--depth=1</argument>
+                                            <argument>-b</argument>
+                                            <argument>visual-part</argument>
                                             <!-- Moving .git folder out of static components -->
                                             <argument>--separate-git-dir</argument>
                                             <argument>.git</argument>
@@ -122,6 +124,8 @@
 		<!-- Override version from bundle to use some Java 8 features from 3.6.x -->
 		<assertj-core.version>3.6.1</assertj-core.version>
 
+		<reference-explorer.version>0.1.0-RELEASE</reference-explorer.version>
+
 		<!-- Application deploying properties -->
 		<project.deploy.server.protocol>http</project.deploy.server.protocol>
 		<project.deploy.server.address>tests.parseq.pro</project.deploy.server.address>
@@ -131,6 +135,14 @@
 		<project.deploy.server.password>tomcat</project.deploy.server.password>
 		<project.deploy.server.path>/ghop-core</project.deploy.server.path>
 	</properties>
+
+	<repositories>
+		<repository>
+			<id>artifactory</id>
+			<name>Parseq Lab Artifactory</name>
+			<url>http://maven.corp.parseq.pro:8081/artifactory/libs-release-local</url>
+		</repository>
+	</repositories>
 
 	<dependencies>
 		<dependency>
@@ -171,6 +183,11 @@
 		    <version>1.0.0-RELEASE</version>
 		</dependency>
 
+		<dependency>
+			<groupId>pro.parseq</groupId>
+			<artifactId>reference-explorer</artifactId>
+			<version>${reference-explorer.version}</version>
+		</dependency>
 	</dependencies>
 
 	<build>

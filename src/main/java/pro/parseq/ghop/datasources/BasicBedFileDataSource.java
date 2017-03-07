@@ -77,8 +77,7 @@ public class BasicBedFileDataSource extends AbstractDataSource<BedBand> {
 		this(BedUtils.getBands(
 					referenceGenomeName, 
 					bed, 
-					new BasicBedFileDataSource
-							.BasicBedBandBuilder(track, new ReferenceGenome(referenceGenomeName))),
+					new BasicBedBandBuilder(track, new ReferenceGenome(referenceGenomeName))),
 				track, comparator, referenceGenomeName);
 	}
 

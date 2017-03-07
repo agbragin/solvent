@@ -23,6 +23,8 @@ import java.util.Set;
 
 import pro.parseq.ghop.entities.Contig;
 import pro.parseq.ghop.entities.ReferenceGenome;
+import pro.parseq.ghop.exceptions.UnknownContigException;
+import pro.parseq.ghop.utils.GenomicCoordinate;
 
 /**
  * Service contract to access reference genomes' information
@@ -46,4 +48,38 @@ public interface ReferenceService {
 	 * @throws ReferenceGenomeNotFoundException if specified reference genome is not in the set of available reference genomes
 	 */
 	List<Contig> getContigs(String referenceGenomeName);
+
+	/**
+	 * Returns information about contig's length
+	 * 
+	 * @param referenceGenomeName Reference genome to list contigs for
+	 * @param contigId Contig to get length of
+	 * @return Contig's length
+	 * @throws ReferenceGenomeNotFoundException if specified reference genome is not in the set of available reference genomes
+	 * @throws UnknownContigException if specified contig is not in the list of reference genome's contigs
+	 */
+	long getContigLength(String referenceGenomeName, String contigId);
+
+	/**
+	 * Retrieves reference genome's sequence for specified parameters
+	 * (return value is bounded by "the leftmost" and "the rightmost"
+	 * coordinates of the current reference genome)
+	 * 
+	 * @param coord Bearing {@link GenomicCoordinate}
+	 * @param prefixSize Number of nucleotides to retrieve before the bearing coordinate
+	 * @param suffixSize Number of nucleotides to retrieve after the bearing coordinate
+	 * @return {@link DispersedSequence} representing nucleotides sequence
+	 */
+	DispersedSequence getSequence(GenomicCoordinate coord, int prefixSize, int suffixSize);
+
+	/**
+	 * Determines genomic coordinate after offset apply to the specified
+	 * (return value is bounded by "the leftmost" and "the rightmost"
+	 * coordinates of the current reference genome)
+	 * 
+	 * @param coord {@link GenomicCoordinate} to apply {@code offset} to
+	 * @param offset Offset to apply (could be both positive or negative)
+	 * @return {@link GenomicCoordinate} after {@code offset} apply
+	 */
+	GenomicCoordinate shiftCoordinate(GenomicCoordinate coord, int offset);
 }

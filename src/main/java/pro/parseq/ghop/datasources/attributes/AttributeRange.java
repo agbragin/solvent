@@ -59,9 +59,15 @@ public class AttributeRange<T extends Comparable<T>> {
 	public AttributeRange(List<T> values) {
 
 		Collections.sort(values);
-
-		this.lowerBound = values.get(0);
-		this.upperBound = values.get(values.size() - 1);
+		
+		if (values.size() > 0) {
+			this.lowerBound = values.get(0);
+			this.upperBound = values.get(values.size() - 1);		
+		} else {
+			this.lowerBound = null;
+			this.upperBound = null;
+		}
+		
 		this.inclusionType = InclusionType.CLOSED;
 		this.values = values;
 	}

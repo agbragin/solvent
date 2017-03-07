@@ -27,9 +27,9 @@ import pro.parseq.ghop.datasources.filters.FilterOperator;
 /**
  * Track properties that are user to compose track filters.
  * 
- * @author abragin
- *
- * @param <T>
+ * @author Anton Bragin <a href="mailto:abragin@parseq.pro">abragin@parseq.pro</a>
+ * 
+ * @param <T> refers to attribute type
  */
 public interface Attribute<T extends Comparable<T>> extends Identifiable<Long> {
 

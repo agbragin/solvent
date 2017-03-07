@@ -41,7 +41,12 @@ import pro.parseq.ghop.datasources.filters.FilterOperator;
 import pro.parseq.ghop.datasources.filters.FilterQuery;
 import pro.parseq.ghop.entities.BedBand;
 import pro.parseq.ghop.entities.Track;
+import pro.parseq.ghop.services.BufferedReferenceServiceClient;
+import pro.parseq.ghop.services.ReferenceService;
+import pro.parseq.ghop.services.RemoteReferenceService;
+import pro.parseq.ghop.services.configs.RefserviceConfig;
 import pro.parseq.ghop.utils.GenomicCoordinate;
+import pro.parseq.ghop.utils.GenomicCoordinateComparator;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -56,6 +61,10 @@ public class BasicBedFileDataSourceTest {
 	private static final String BED = "/basic_regions.bed";
 
 	@Autowired
+	private RefserviceConfig config;
+
+	private ReferenceService refservice;
+
 	private Comparator<GenomicCoordinate> comparator;
 
 	private BasicBedFileDataSource dataSource, filteredDataSource;
@@ -63,6 +72,9 @@ public class BasicBedFileDataSourceTest {
 
 	@Before
 	public void setUpDataSource() throws Exception {
+
+		refservice = new BufferedReferenceServiceClient(new RemoteReferenceService(config));
+		comparator = new GenomicCoordinateComparator(refservice);
 
 		track = new Track(TEST_TRACK);
 		logger.info("Creating new data source for a file: {}", BED);

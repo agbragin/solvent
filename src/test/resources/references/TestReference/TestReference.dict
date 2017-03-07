@@ -1,0 +1,4 @@
+@HD	VN:1.5	SO:unsorted
+@SQ	SN:foo	LN:8	M5:6b9b58696299984ac66113762b6b5b56	UR:file:H:\aafanasyev\sts-workspace\ghop-core\src\test\resources\references\TestReference\TestReference.fasta
+@SQ	SN:bar	LN:8	M5:c4a110cf4e9d6324ed3dcfbaefb71dbf	UR:file:H:\aafanasyev\sts-workspace\ghop-core\src\test\resources\references\TestReference\TestReference.fasta
+@SQ	SN:baz	LN:8	M5:643931ec275282d8d5a193d2a0cd313b	UR:file:H:\aafanasyev\sts-workspace\ghop-core\src\test\resources\references\TestReference\TestReference.fasta

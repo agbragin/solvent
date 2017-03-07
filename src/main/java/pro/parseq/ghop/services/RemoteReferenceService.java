@@ -22,39 +22,63 @@ import java.net.URI;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Cacheable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import pro.parseq.ghop.entities.Contig;
 import pro.parseq.ghop.entities.ReferenceGenome;
 import pro.parseq.ghop.exceptions.ReferenceGenomeNotFoundException;
+import pro.parseq.ghop.exceptions.UnknownContigException;
 import pro.parseq.ghop.services.configs.RefserviceConfig;
+import pro.parseq.ghop.utils.GenomicCoordinate;
 
 /**
  * {@link ReferenceService} implementation based on refservice web-service
  * 
  * @author Alexander Afanasyev <a href="mailto:aafanasyev@parseq.pro">aafanasyev@parseq.pro</a>
  */
-@Component
-public class ReferenceWebService implements ReferenceService {
+public class RemoteReferenceService extends AbstractReferenceService {
 
-	@Autowired
+	private static final Logger logger = LoggerFactory.getLogger(RemoteReferenceService.class);
+
 	private RefserviceConfig config;
 
 	private RestTemplate restTemplate = new RestTemplate();
 
+	public RemoteReferenceService(RefserviceConfig config) {
+		this.config = config;
+	}
+
 	@Override
-	@Cacheable("referenceGenomes")
+	protected String getSequence(GenomicCoordinate coord, int count) {
+
+		logger.info("Perform an HTTP request for reference genome sequence of length {} starting from: {}",
+				count, coord);
+
+		ResponseEntity<JsonNode> response = restTemplate
+				.exchange(sequenceUri(coord, count), HttpMethod.GET, null, JsonNode.class);
+		String sequence = response.getBody().get("sequence").asText();
+		logger.info("Got reference genome sequence of length {} starting from {}: {}",
+				sequence.length(), coord, sequence);
+
+		return sequence;
+	}
+
+	@Override
 	public Set<ReferenceGenome> getReferenceGenomes() {
+
+		logger.info("Perform an HTTP request for reference genome list");
 
 		ParameterizedTypeReference<List<ReferenceGenome>> responseType =
 				new ParameterizedTypeReference<List<ReferenceGenome>>() {};
@@ -65,8 +89,10 @@ public class ReferenceWebService implements ReferenceService {
 	}
 
 	@Override
-	@Cacheable("referenceGenomes")
 	public List<Contig> getContigs(String referenceGenomeName) {
+
+		logger.info("Perform an HTTP request for contigs list of referenc genome: {}",
+				referenceGenomeName);
 
 		try {
 
@@ -83,6 +109,37 @@ public class ReferenceWebService implements ReferenceService {
 				throw e;
 			}
 		}
+	}
+
+	@Override
+	public long getContigLength(String referenceGenomeName, String contigId) {
+
+		logger.info("Perform an HTTP request for reference genome '{}' contig '{}' length",
+				referenceGenomeName, contigId);
+
+		List<Contig> contigs = getContigs(referenceGenomeName);
+		List<String> contigNames = contigs.stream()
+				.map(Contig::getId)
+				.collect(Collectors.toList());
+
+		return contigs.stream()
+				.filter(contig -> contig.getId().equals(contigId))
+				.findFirst()
+				.orElseThrow(() -> new UnknownContigException(
+						referenceGenomeName, contigId, contigNames))
+				.getLength();
+	}
+
+	private URI sequenceUri(GenomicCoordinate coord, int count) {
+
+		return refserviceRoot()
+				.pathSegment(config.getReferencesEndpoint())
+				.pathSegment(coord.getContig().getReferenceGenome().getId())
+				.path(coord.getContig().getId())
+				.queryParam("start", coord.getCoord() + 1)
+				.queryParam("stop", coord.getCoord() + count)
+				.build().encode()
+				.toUri();
 	}
 
 	private URI referenceUri(String referenceGenomeName) {

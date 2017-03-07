@@ -25,6 +25,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import pro.parseq.ghop.entities.Contig;
 
+/**
+ * <p>Holds an information about genomic coordinate</p>
+ * 
+ * <p>{@code contig} field holds an information about reference genome and contig id</p>
+ * <p>{@code coord} field holds an information about contig's coordinate (according to <b>zero-based, half-open</b> scheme)</p>
+ * 
+ * @author Alexander Afanasyev <a href="mailto:aafanasyev@parseq.pro">aafanasyev@parseq.pro</a>
+ */
 public class GenomicCoordinate {
 
 	private final Contig contig;

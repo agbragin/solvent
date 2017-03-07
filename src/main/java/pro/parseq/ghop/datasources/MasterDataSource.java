@@ -27,6 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -36,16 +37,59 @@ import org.springframework.stereotype.Component;
 
 import pro.parseq.ghop.datasources.attributes.Attribute;
 import pro.parseq.ghop.entities.Band;
+import pro.parseq.ghop.entities.ReferenceGenome;
 import pro.parseq.ghop.entities.Track;
+import pro.parseq.ghop.services.ReferenceService;
 import pro.parseq.ghop.utils.GenomicCoordinate;
+import pro.parseq.ghop.utils.GenomicCoordinateComparatorFactory;
 
 @Component
 public class MasterDataSource {
 
+	@Autowired
+	private GenomicCoordinateComparatorFactory genomicCoordinateComparatorFactory;
+
 	private Map<String, Track> tracks = new HashMap<>();
 
-	@Autowired
+	private ReferenceService referenceService;
 	private Comparator<GenomicCoordinate> comparator;
+	private ReferenceGenome referenceGenome;
+
+	public void setReferenceService(ReferenceService referenceService) {
+		this.referenceService = referenceService;
+		this.comparator = genomicCoordinateComparatorFactory.newComparator(referenceService);
+	}
+
+	public ReferenceService getReferenceService() {
+
+		if (referenceService == null) {
+			throw new IllegalStateException("No reference service was selected: select your reference service first");
+		}
+
+		return referenceService;
+	}
+
+	public Comparator<GenomicCoordinate> getComparator() {
+
+		if (referenceService == null) {
+			throw new IllegalStateException("No reference service was selected: select your reference service first");
+		}
+
+		return comparator;
+	}
+
+	public void setReferenceGenome(ReferenceGenome referenceGenome) {
+		this.referenceGenome = referenceGenome;
+	}
+
+	public ReferenceGenome getReferenceGenome() {
+
+		if (referenceGenome == null) {
+			throw new IllegalStateException("No reference genome was selected: select reference genome first");
+		}
+
+		return referenceGenome;
+	}
 
 	public Set<Track> getTracks() {
 		return tracks.keySet().stream().map(tracks::get).collect(Collectors.toSet());
@@ -123,34 +167,21 @@ public class MasterDataSource {
 		Set<Band> coverage = new HashSet<>();
 		// Coordinate collection of all bands defined above
 		Set<GenomicCoordinate> coords = new HashSet<>();
-		for (DataSource<? extends Band> dataSource: query.getDataSources()) {
 
-			// Retrieve track's coordinate coverage
-			Set<? extends Band> trackCoverage = dataSource.coverage(query.getCoord());
-			trackCoverage.stream().forEach(band -> {
-				coords.add(band.getStartCoord());
-				coords.add(band.getEndCoord());
-			});
-			// Retrieve track's next bands' coordinates
-			Set<? extends Band> trackNextBands = dataSource
-					.rightBordersGenerants(query.getRight(), query.getCoord());
-			trackNextBands.stream().forEach(band -> {
-				coords.add(band.getStartCoord());
-				coords.add(band.getEndCoord());
-			});
-			// Retrieve track's previous bands' coordinates
-			Set<? extends Band> trackPrevBands = dataSource
-					.leftBordersGenerants(query.getLeft(), query.getCoord());
-			trackPrevBands.stream().forEach(band -> {
-				coords.add(band.getStartCoord());
-				coords.add(band.getEndCoord());
-			});
+		query.getDataSources().stream().forEach(dataSource -> {
 
-			coverage.addAll(trackCoverage);
-			bands.addAll(trackCoverage);
-			bands.addAll(trackNextBands);
-			bands.addAll(trackPrevBands);
-		}
+			// Retrieve data source's bands
+			Set <? extends Band> trackBands = dataSource
+					.getBands(query.getCoord(), query.getLeft(), query.getRight());
+
+			// Retrieve bands' borders
+			coords.addAll(trackBands.stream()
+					.map(band -> Stream.concat(Stream.of(band.getStartCoord()), Stream.of(band.getEndCoord())))
+					.flatMap(Function.identity())
+					.collect(Collectors.toSet()));
+
+			bands.addAll(trackBands);
+		});
 
 		// Arrange retrieved coordinates in an ascending order
 		List<GenomicCoordinate> sortedCoords = new ArrayList<>(coords);

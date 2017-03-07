@@ -24,23 +24,26 @@ import org.springframework.stereotype.Component;
 @Component
 public class RefserviceConfig {
 
-	@Value("${refservice.connection.scheme}")
+	@Value("${refservice.remote.connection.scheme}")
 	private String connectionScheme;
 
-	@Value("${refservice.connection.host}")
+	@Value("${refservice.remote.connection.host}")
 	private String connectionHost;
 
-	@Value("${refservice.connection.port}")
+	@Value("${refservice.remote.connection.port}")
 	private int connectionPort;
 
-	@Value("${refservice.api.root}")
+	@Value("${refservice.remote.api.root}")
 	private String apiRoot;
 
-	@Value("${refservice.api.version}")
+	@Value("${refservice.remote.api.version}")
 	private String apiVersion;
 
-	@Value("${refservice.api.endpoints.references}")
+	@Value("${refservice.remote.api.endpoints.references}")
 	private String referencesEndpoint;
+
+	@Value("${refservice.local.path}")
+	private String referencesPath;
 
 	protected RefserviceConfig() {}
 
@@ -90,5 +93,13 @@ public class RefserviceConfig {
 
 	public void setReferencesEndpoint(String referencesEndpoint) {
 		this.referencesEndpoint = referencesEndpoint;
+	}
+
+	public String getReferencesPath() {
+		return referencesPath;
+	}
+
+	public void setReferencesPath(String referencesPath) {
+		this.referencesPath = referencesPath;
 	}
 }

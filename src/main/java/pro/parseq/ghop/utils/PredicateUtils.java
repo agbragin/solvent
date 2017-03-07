@@ -29,8 +29,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import pro.parseq.ghop.datasources.attributes.Attribute;
 import pro.parseq.ghop.datasources.filters.AttributeFilter;
 import pro.parseq.ghop.entities.AttributeFilterAggregateEntity;
+import pro.parseq.ghop.entities.Contig;
 import pro.parseq.ghop.exceptions.IllegalAggregateOperatorException;
 import pro.parseq.ghop.exceptions.UnsupportedAttributeFilterOperatorException;
+import pro.parseq.ghop.services.ContigSequence;
 import pro.parseq.ghop.utils.BedUtils.Region;
 
 public class PredicateUtils {
@@ -154,7 +156,7 @@ public class PredicateUtils {
 					switch (attributeFilter.getOperator()) {
 					case IN:
 						return attributeFilter.getValues().stream()
-								.allMatch(value -> attribute
+								.anyMatch(value -> attribute
 										.parseValue(property.asText())
 										.compareTo(value) == 0);
 
@@ -231,4 +233,15 @@ public class PredicateUtils {
 			});
 		}
 	};
+
+	public static final Predicate<ContigSequence> isFragmentOf(Contig contig) {
+
+		return new Predicate<ContigSequence>() {
+
+			@Override
+			public boolean test(ContigSequence t) {
+				return contig.equals(t.getContig());
+			}
+		};
+	}
 }

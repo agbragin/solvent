@@ -183,8 +183,7 @@ public class HateoasUtils {
 	public static final <T extends Band> Resources<T> bandResources(Set<T> bands, QueryForBands query) {
 
 		Link selfLink = linkTo(methodOn(BandController.class)
-				.getBands(query.getCoord().getContig().getReferenceGenome().getId(),
-						query.getCoord().getContig().getId(), query.getCoord().getCoord(),
+				.getBands(query.getCoord().getContig().getId(), query.getCoord().getCoord(),
 						query.getLeft(), query.getRight(),
 						query.getDataSources().stream()
 								.map(DataSource::getId)

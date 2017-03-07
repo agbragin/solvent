@@ -23,8 +23,10 @@ import static org.junit.Assert.fail;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +35,10 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import pro.parseq.ghop.exceptions.UnknownContigException;
 import pro.parseq.ghop.exceptions.UnknownReferenceGenomeException;
+import pro.parseq.ghop.services.BufferedReferenceServiceClient;
+import pro.parseq.ghop.services.ReferenceService;
+import pro.parseq.ghop.services.RemoteReferenceService;
+import pro.parseq.ghop.services.configs.RefserviceConfig;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -48,7 +54,18 @@ public class GenomicCoordinateComparatorTest {
 	private static final String SOMEBIGCONTIG = "somebigcontig";
 
 	@Autowired
-	private GenomicCoordinateComparator comparator;
+	private RefserviceConfig config;
+
+	private ReferenceService refservice;
+
+	private Comparator<GenomicCoordinate> comparator;
+
+	@Before
+	public void setUp() throws Exception {
+
+		refservice = new BufferedReferenceServiceClient(new RemoteReferenceService(config));
+		comparator = new GenomicCoordinateComparator(refservice);
+	}
 
 	@Test
 	public void testGenomicCoordinatesSorting() throws Exception {

@@ -43,11 +43,17 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import com.fasterxml.jackson.databind.JsonNode;
+
 import pro.parseq.ghop.datasources.attributes.Attribute;
 import pro.parseq.ghop.datasources.attributes.AttributeType;
 import pro.parseq.ghop.entities.Contig;
 import pro.parseq.ghop.entities.VariantBand;
+import pro.parseq.ghop.services.BufferedReferenceServiceClient;
+import pro.parseq.ghop.services.ReferenceService;
+import pro.parseq.ghop.services.RemoteReferenceService;
+import pro.parseq.ghop.services.configs.RefserviceConfig;
 import pro.parseq.ghop.utils.GenomicCoordinate;
+import pro.parseq.ghop.utils.GenomicCoordinateComparator;
 
 
 @RunWith(SpringRunner.class)
@@ -57,6 +63,9 @@ public class VcfFileDataSourceTest {
 	private static final Logger logger = LoggerFactory.getLogger(VcfFileDataSourceTest.class);
 
 	@Autowired
+	private RefserviceConfig config;
+
+	private ReferenceService refservice;
 	private Comparator<GenomicCoordinate> comparator;
 
 	private static final String REFERENCE_NAME = "GRCh37.p13";
@@ -65,6 +74,9 @@ public class VcfFileDataSourceTest {
 
 	@Before
 	public void createVcfFileDataSource() {
+
+		refservice = new BufferedReferenceServiceClient(new RemoteReferenceService(config));
+		comparator = new GenomicCoordinateComparator(refservice);
 
 		vcfFileDataSource = new VcfFileDataSource(
 				null, getClass().getResourceAsStream(VCF), comparator, REFERENCE_NAME);
@@ -81,22 +93,22 @@ public class VcfFileDataSourceTest {
 		Contig contig = new Contig(REFERENCE_NAME, "chr20");
 		List<GenomicCoordinate> borders = vcfFileDataSource.leftBorders(1,
 				new GenomicCoordinate(contig, 14370));
-		assertEquals("Check leftmost band", 1, borders.size());
-		assertEquals("Check leftmost band", 14370, borders.get(0).getCoord());
+		assertEquals("Check leftmost band", 2, borders.size());
+		assertEquals("Check leftmost band", 14369, borders.get(0).getCoord());
 
 		borders = vcfFileDataSource.leftBorders(1, new GenomicCoordinate(contig, 15000));
 		assertEquals("Check leftmost band", 1, borders.size());
-		assertEquals("Check leftmost band", 14371, borders.get(0).getCoord());
+		assertEquals("Check leftmost band", 14370, borders.get(0).getCoord());
 
 		borders = vcfFileDataSource.rightBorders(10, new GenomicCoordinate(contig, 15000));
 		assertEquals("Check right borders", 4, borders.size());
 
 		assertEquals("Check right borders", borders,
 			Stream.of(
+					new GenomicCoordinate(contig, 17329),
 					new GenomicCoordinate(contig, 17330),
-					new GenomicCoordinate(contig, 17331),
-					new GenomicCoordinate(contig, 1110696),
-					new GenomicCoordinate(contig, 1110697))
+					new GenomicCoordinate(contig, 1110695),
+					new GenomicCoordinate(contig, 1110696))
 		.collect(Collectors.toList()));
 	}
 
@@ -313,5 +325,20 @@ public class VcfFileDataSourceTest {
 
 		assertNotNull("Check range", attribute.getRange());
 		assertEquals("Check range values", new ArrayList<Long>(longValues), attribute.getRange().getValues());
+	}
+	
+	@Test
+	public void testRealLifeVcfFiles() {
+		
+		GenomicCoordinate coordinateStart = new GenomicCoordinate(new Contig("GRCh37.p13", "chr1"), 1);
+		
+		VcfFileDataSource torrentSuiteVcf = new VcfFileDataSource(
+				null, getClass().getResourceAsStream("/NIST_S_L001.vcf"), comparator, REFERENCE_NAME);
+		
+		assertEquals("Number of variants", 173, torrentSuiteVcf.rightBordersGenerants(1000, 
+				coordinateStart).size());
+		
+
+		
 	}
 }
