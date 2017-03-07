@@ -124,7 +124,7 @@
 		<!-- Override version from bundle to use some Java 8 features from 3.6.x -->
 		<assertj-core.version>3.6.1</assertj-core.version>
 
-		<reference-explorer.version>0.1.0-RELEASE</reference-explorer.version>
+		<reference-explorer.version>0.1.1-RELEASE</reference-explorer.version>
 
 		<!-- Application deploying properties -->
 		<project.deploy.server.protocol>http</project.deploy.server.protocol>
