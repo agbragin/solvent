@@ -1,9 +1,30 @@
+/*******************************************************************************
+ *     Copyright 2016-2017 the original author or authors.
+ *
+ *     This file is part of CONC.
+ *
+ *     CONC. is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU Affero General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     CONC. is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ *     GNU Affero General Public License for more details.
+ *
+ *     You should have received a copy of the GNU Affero General Public License
+ *     along with CONC. If not, see <http://www.gnu.org/licenses/>.
+ *******************************************************************************/
 package pro.parseq.ghop.entities;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+@JsonInclude(Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Contig {
 
@@ -16,7 +37,7 @@ public class Contig {
 	private ReferenceGenome referenceGenome;
 
 	private String id;
-	private long length;
+	private Long length;
 
 	protected Contig() {}
 
@@ -41,6 +62,11 @@ public class Contig {
 		this.length = length;
 	}
 
+	public Contig(String referenceGenomeId, String id) {
+		referenceGenome = new ReferenceGenome(referenceGenomeId);
+		this.id = id;
+	}
+
 	public ReferenceGenome getReferenceGenome() {
 		return referenceGenome;
 	}
@@ -57,11 +83,11 @@ public class Contig {
 		this.id = id;
 	}
 
-	public long getLength() {
+	public Long getLength() {
 		return length;
 	}
 
-	public void setLength(long length) {
+	public void setLength(Long length) {
 		this.length = length;
 	}
 
@@ -89,6 +115,7 @@ public class Contig {
 
 	@Override
 	public String toString() {
+
 		return new StringBuilder()
 				.append(referenceGenome)
 				.append(":")

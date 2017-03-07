@@ -1,21 +1,37 @@
+/*******************************************************************************
+ *     Copyright 2016-2017 the original author or authors.
+ *
+ *     This file is part of CONC.
+ *
+ *     CONC. is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU Affero General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     CONC. is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ *     GNU Affero General Public License for more details.
+ *
+ *     You should have received a copy of the GNU Affero General Public License
+ *     along with CONC. If not, see <http://www.gnu.org/licenses/>.
+ *******************************************************************************/
 package pro.parseq.ghop.exceptions;
-
-import pro.parseq.ghop.entities.ReferenceGenome;
 
 public class ReferenceGenomeNotFoundException extends RuntimeException {
 
 	private static final long serialVersionUID = 7616074261125595081L;
 
-	private final ReferenceGenome referenceGenome;
+	private final String referenceGenomeName;
 
-	public ReferenceGenomeNotFoundException(ReferenceGenome referenceGenome) {
+	public ReferenceGenomeNotFoundException(String referenceGenomeName) {
 
-		super(String.format("Reference genome not found: %s", referenceGenome));
+		super(String.format("Reference genome not found: %s", referenceGenomeName));
 
-		this.referenceGenome = referenceGenome;
+		this.referenceGenomeName = referenceGenomeName;
 	}
 
-	public ReferenceGenome getReferenceGenome() {
-		return referenceGenome;
+	public String getReferenceGenomeName() {
+		return referenceGenomeName;
 	}
 }

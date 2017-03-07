@@ -1,8 +1,0 @@
-Test BED file containing test regions specification
-chr1	10	20
-chr1	10	20
-chr2	20	50
-chr2	50	70
-chr2	60	140
-chr4	0	10
-chr4	40	50
