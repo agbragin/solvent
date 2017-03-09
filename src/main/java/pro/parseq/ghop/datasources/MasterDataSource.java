@@ -42,6 +42,7 @@ import pro.parseq.ghop.entities.Track;
 import pro.parseq.ghop.services.ReferenceService;
 import pro.parseq.ghop.utils.GenomicCoordinate;
 import pro.parseq.ghop.utils.GenomicCoordinateComparatorFactory;
+import pro.parseq.ghop.utils.PredicateUtils;
 
 @Component
 public class MasterDataSource {
@@ -163,8 +164,6 @@ public class MasterDataSource {
 
 		// Band collection from each source for the present query
 		Set<Band> bands = new HashSet<>();
-		// Band collection from each source that is covering present coordinate
-		Set<Band> coverage = new HashSet<>();
 		// Coordinate collection of all bands defined above
 		Set<GenomicCoordinate> coords = new HashSet<>();
 
@@ -190,30 +189,22 @@ public class MasterDataSource {
 		 * Try to find an index of requested coordinate in the retrieved coordinate collection,
 		 */
 		int vOri = Collections.binarySearch(sortedCoords, query.getCoord(), comparator);
-		/**
-		 * If requested coordinate is found in the collection,
-		 * we should take coordinate next to it,
-		 * as we've already accounted it in the coverage
-		 */
-		int corr = 1;
 		if (vOri < 0) {
-			vOri = -(vOri + 1);
 			/**
-			 * But if not, than vOri is already the next coordinate
-			 * (see Collections.binarySearch method documentation)
+			 * See Collections.binarySearch method documentation
 			 */
-			corr = 0;
+			vOri = -(vOri + 1);
 		}
+
 		// Bands to output
-		Set<Band> output = new HashSet<>(coverage);
+		Set<Band> output = new HashSet<>();
 		/**
 		 * Take right borders generants
 		 */
-		for (int i = vOri + corr; i < sortedCoords.size() && (i - vOri - corr) < query.getRight(); ++i) {
+		for (int i = vOri; i < sortedCoords.size() && (i - vOri) <= query.getRight(); ++i) {
 			final int idx = i;
 			output.addAll(bands.stream()
-					.filter(band -> band.getStartCoord().equals(sortedCoords.get(idx))
-							|| band.getEndCoord().equals(sortedCoords.get(idx)))
+					.filter(PredicateUtils.isCovering(sortedCoords.get(idx), comparator))
 					.collect(Collectors.toSet()));
 		}
 		/**
@@ -221,11 +212,10 @@ public class MasterDataSource {
 		 * (due to Collections.binarySearch mechanism we start iterating from (vOri-1) by default,
 		 * so no need in any corrections as we done in right borders generants)
 		 */
-		for (int i = vOri - 1; i > -1 && (vOri - 1 - i) < query.getLeft(); --i) {
+		for (int i = vOri - 1; i > -1 && (vOri - 1 - i) <= query.getLeft(); --i) {
 			final int idx = i;
 			output.addAll(bands.stream()
-					.filter(band -> band.getStartCoord().equals(sortedCoords.get(idx))
-							|| band.getEndCoord().equals(sortedCoords.get(idx)))
+					.filter(PredicateUtils.isCovering(sortedCoords.get(idx), comparator))
 					.collect(Collectors.toSet()));
 		}
 

@@ -19,6 +19,7 @@
 package pro.parseq.ghop.utils;
 
 import java.util.List;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.IntPredicate;
@@ -29,6 +30,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import pro.parseq.ghop.datasources.attributes.Attribute;
 import pro.parseq.ghop.datasources.filters.AttributeFilter;
 import pro.parseq.ghop.entities.AttributeFilterAggregateEntity;
+import pro.parseq.ghop.entities.Band;
 import pro.parseq.ghop.entities.Contig;
 import pro.parseq.ghop.exceptions.IllegalAggregateOperatorException;
 import pro.parseq.ghop.exceptions.UnsupportedAttributeFilterOperatorException;
@@ -241,6 +243,18 @@ public class PredicateUtils {
 			@Override
 			public boolean test(ContigSequence t) {
 				return contig.equals(t.getContig());
+			}
+		};
+	}
+
+	public static final Predicate<Band> isCovering(GenomicCoordinate coord, Comparator<GenomicCoordinate> comparator) {
+
+		return new Predicate<Band>() {
+
+			@Override
+			public boolean test(Band t) {
+				return (comparator.compare(t.getStartCoord(), coord) <= 0)
+						&& (comparator.compare(t.getEndCoord(), coord) >= 0);
 			}
 		};
 	}
