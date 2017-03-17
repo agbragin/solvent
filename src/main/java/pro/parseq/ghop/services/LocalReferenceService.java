@@ -25,10 +25,17 @@ public class LocalReferenceService extends AbstractReferenceService {
 	@Override
 	protected String getSequence(GenomicCoordinate coord, int count) {
 
+		/**
+		 * ReferenceExplorer is using one-based, closed scheme,
+		 * so we need to map the request into this scheme first
+		 */
+		long startPosition = coord.getCoord() + 1;		// start zero-based + 1 ~ start one-based
+		long endPosition = startPosition + count - 1;	// start one-based + length - 1 ~ end one-based
+
 		return referenceExplorer.getReferenceSequence(
 				coord.getContig().getReferenceGenome().getId(),
 				coord.getContig().getId(),
-				coord.getCoord() + 1, Math.min(coord.getCoord() + count, coord.getContig().getLength()),
+				startPosition, Math.min(endPosition, coord.getContig().getLength()),
 				ReferenceSequenceCase.UPPER);
 	}
 

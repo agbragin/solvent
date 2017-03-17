@@ -30,7 +30,7 @@ public class ReferenceServiceController {
 	@PostMapping
 	public void setReferenceService(ReferenceServiceType type) {
 
-		Track referenceTrack = new Track("reference");
+		Track referenceTrack = new Track("Reference");
 		ReferenceService refservice;
 
 		switch (type) {
