@@ -59,6 +59,7 @@ import pro.parseq.ghop.utils.IdGenerationUtils;
 import pro.parseq.ghop.utils.PredicateUtils;
 import pro.parseq.vcf.VcfExplorer;
 import pro.parseq.vcf.exceptions.InvalidVcfFileException;
+import pro.parseq.vcf.fields.Filter;
 import pro.parseq.vcf.fields.Format;
 import pro.parseq.vcf.fields.Information;
 import pro.parseq.vcf.fields.types.FormatFieldType;
@@ -211,8 +212,8 @@ public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 		// Filter attributes		
 		ArrayNode filterNode = properties.putArray("FILTER");
 		variant.getFilters().stream()
-			.map(filter -> filter.getId())
-			.forEach(value -> filterNode.add(value));
+			.map(Filter::getId)
+			.forEach(filterNode::add);
 
 		// Info attributes
 		VcfFileDataSource.putInfoFields(properties, vcfExplorer, variant.getInfo()); 
@@ -480,21 +481,9 @@ public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 	 */
 	static Attribute<String> generateFilterAttributes(VcfFile vcfFile) {
 
-		// Grab all possible filter values as strings
-		// TODO: think about grabbing filter parameters from VCF header
-		Set<String> values = vcfFile.getVariants().stream()
-				.map((Variant it) -> {
-					// Get variant filters
-					return it.getFilters();
-				})
-				// Transforming VCF values to strings
-				.flatMap((List<?> it) -> it.stream())
-				.map(it -> it.toString())
-				.collect(Collectors.toSet());
-
 		return new SetAttributeBuilder<String>("FILTER")
 				.setDescription("Filter status")
-				.setValues(values)
+				.setValues(vcfFile.getFilters().keySet())
 				.build();
 	}
 
@@ -628,9 +617,9 @@ public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 					.map(variant -> variant.getInfo().get(info.getId()))
 					.filter(Objects::nonNull)
 					// Flatten INFO values list
-					.flatMap((List<?> values) -> values.stream())
+					.flatMap(List::stream)
 					// Transforming VCF values to strings
-					.map(value -> value.toString())
+					.map(Object::toString)
 					.collect(Collectors.toSet());
 		}
 	}
