@@ -40,10 +40,13 @@ public class BedUtilsTest {
 	private static final long TWENTY = 20;
 	private static final long THIRTY = 30;
 	private static final long FOURTY = 40;
+	private static final String NAME = "A";
 	private static final String OPT1 = "opt1";
 	private static final String OPT2 = "opt2";
 
 	private static final String VALID_DATA_LINE_WO_OPTS = String.join(TAB, CHR1, String.valueOf(TEN), String.valueOf(TWENTY));
+	private static final String VALID_DATA_LINE_WITH_NAME = String.join(TAB, CHR1, String.valueOf(TEN), String.valueOf(TWENTY), NAME);
+	private static final String VALID_DATA_LINE_WITH_OPT = String.join(TAB, CHR2, String.valueOf(THIRTY), String.valueOf(FOURTY), String.join(SPACE, OPT1, OPT2));
 	private static final String VALID_DATA_LINE_WITH_OPTS = String.join(TAB, CHR2, String.valueOf(THIRTY), String.valueOf(FOURTY), OPT1, OPT2);
 	private static final String ILLEGAL_DELIMITED_DATA_LINE = String.join(SPACE, CHR1, String.valueOf(TEN), String.valueOf(TWENTY));
 	private static final String ILLEGAL_COORD_VALUE_DATA_LINE = String.join(TAB, CHR2, "thirty", "fourty");
@@ -56,6 +59,14 @@ public class BedUtilsTest {
 		assertThat(region.getChromEnd()).isEqualTo(TWENTY);
 	};
 
+	private static final Consumer<Region> namedRegion = region -> {
+
+		assertThat(region.getChrom()).isEqualTo(CHR1);
+		assertThat(region.getChromStart()).isEqualTo(TEN);
+		assertThat(region.getChromEnd()).isEqualTo(TWENTY);
+		assertThat(region.getOpts()).containsExactly(NAME);
+	};
+
 	private static final Consumer<Region> chr2Region = region -> {
 
 		assertThat(region.getChrom()).isEqualTo(CHR2);
@@ -65,6 +76,10 @@ public class BedUtilsTest {
 
 	private static final Consumer<Region> hasTestOpts = region -> {
 		assertThat(region.getOpts()).containsExactly(OPT1, OPT2).size().isEqualTo(2);
+	};
+
+	private static final Consumer<Region> hasCollapsedTestOpts = region -> {
+		assertThat(region.getOpts()).containsExactly(String.join(SPACE, OPT1, OPT2)).size().isEqualTo(1);
 	};
 
 	@Test
@@ -83,8 +98,11 @@ public class BedUtilsTest {
 	public void testValidDataLineWOOptsParsing() throws Exception {
 
 		try {
+
 			assertThat(BedUtils.parseRegion(VALID_DATA_LINE_WO_OPTS)).satisfies(chr1Region);
 			assertThat(BedUtils.parseRegion(VALID_DATA_LINE_WITH_OPTS)).satisfies(chr2Region).satisfies(hasTestOpts);
+			assertThat(BedUtils.parseRegion(VALID_DATA_LINE_WITH_NAME)).satisfies(namedRegion);
+			assertThat(BedUtils.parseRegion(VALID_DATA_LINE_WITH_OPT)).satisfies(chr2Region).satisfies(hasCollapsedTestOpts);
 		} catch (IllegalBedFileDataLineException e) {
 			fail("Valid BED datalines should not cause an exception!");
 		}
