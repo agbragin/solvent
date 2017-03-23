@@ -43,19 +43,23 @@ public class SetAttributeTest {
 				.mapToObj(it -> new Long(it))
 				.collect(Collectors.toSet());
 
-		Attribute<Long> attribute = new SetAttribute.SetAttributeBuilder<Long>(name)
-				.setDescription(description)
-				.setValues(values)
+		Attribute<Long> attribute = new SetAttribute.SetAttributeBuilder<Long>(name, Long.class)
+				.description(description)
+				.values(values)
 				.build();
 
 		assertNotNull("Check id", attribute.getId());
 		assertEquals("Check name", name, attribute.getName());
 		assertEquals("Check description", description, attribute.getDescription());
-		assertEquals("Check type", AttributeType.ENUM, attribute.getType());
+		assertEquals("Check type", AttributeType.SET, attribute.getType());
 		assertNotNull("Check range", attribute.getRange());
 
 		assertEquals("Check range lower bound", new Long(0), attribute.getRange().getLowerBound());
 		assertEquals("Check range lower bound", new Long(4), attribute.getRange().getUpperBound());
 		assertEquals("Check range values", new ArrayList<Long>(values), attribute.getRange().getValues());
+		
+		values.stream()
+				.forEach(it -> assertTrue("Check value retrieval", it.equals(attribute.parseValue(it.toString()))));
+
 	}
 }

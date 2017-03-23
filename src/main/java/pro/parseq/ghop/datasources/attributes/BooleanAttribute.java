@@ -20,23 +20,31 @@ package pro.parseq.ghop.datasources.attributes;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.springframework.hateoas.core.Relation;
 
-import pro.parseq.ghop.datasources.attributes.AbstractAttribute;
 import pro.parseq.ghop.datasources.filters.FilterOperator;
 import pro.parseq.ghop.exceptions.IllegalAttributeValueException;
 
 @Relation(collectionRelation = "attributes")
-public class BooleanAttribute extends AbstractAttribute<Boolean> {
+public class BooleanAttribute extends SetAttribute<Boolean> {
 
+	private static final Set<Boolean> values = new HashSet<>();
+	
+	static {
+		values.add(Boolean.TRUE);
+		values.add(Boolean.FALSE);
+	}
+	
 	private BooleanAttribute(String name, String description) {
-		super(name, AttributeType.BOOLEAN, description, null);
+		super(name, description, BooleanAttribute.values, Boolean.class);
 	}
 
 	@Override
 	public Boolean parseValue(String s) {
-
+		
 		if (s.toLowerCase().equals("true")) {
 			return true;
 		} else if (s.toLowerCase().equals("false")) {
@@ -45,13 +53,18 @@ public class BooleanAttribute extends AbstractAttribute<Boolean> {
 
 		throw new IllegalAttributeValueException(this, s);
 	}
-
+	
 	@Override
 	public Collection<FilterOperator> operators() {
 		return Arrays.asList(FilterOperator.EQUALS, FilterOperator.NOTEQUALS);
 	}
+	
+	@Override
+	public AttributeType getType() {
+		return AttributeType.BOOLEAN;
+	}
 
-	public static final class BooleanAttributeBuilder {
+	public static final class BooleanAttributeBuilder implements AttributeBuilder<Boolean> {
 
 		private final String name;
 		private String description;
@@ -60,11 +73,13 @@ public class BooleanAttribute extends AbstractAttribute<Boolean> {
 			this.name = name;
 		}
 
+		@Override
 		public BooleanAttributeBuilder description(String description) {
 			this.description = description;
 			return this;
 		}
 
+		@Override
 		public BooleanAttribute build() {
 			return new BooleanAttribute(name, description);
 		}

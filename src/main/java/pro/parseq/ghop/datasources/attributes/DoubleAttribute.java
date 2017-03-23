@@ -51,7 +51,7 @@ public class DoubleAttribute extends AbstractAttribute<Double> {
 				FilterOperator.LESS, FilterOperator.LESSEQ);
 	}
 
-	public static final class DoubleAttributeBuilder {
+	public static final class DoubleAttributeBuilder implements AttributeBuilder<Double> {
 
 		private final String name;
 		private String description;
@@ -61,16 +61,18 @@ public class DoubleAttribute extends AbstractAttribute<Double> {
 			this.name = name;
 		}
 
+		public DoubleAttributeBuilder range(AttributeRange<Double> range) {
+			this.range = range;
+			return this;
+		}
+		
+		@Override
 		public DoubleAttributeBuilder description(String description) {
 			this.description = description;
 			return this;
 		}
 
-		public DoubleAttributeBuilder range(AttributeRange<Double> range) {
-			this.range = range;
-			return this;
-		}
-
+		@Override
 		public DoubleAttribute build() {
 			return new DoubleAttribute(name, description, range);
 		}

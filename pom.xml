@@ -5,7 +5,7 @@
 
 	<groupId>pro.parseq</groupId>
 	<artifactId>ghop-core</artifactId>
-	<version>1.0.0-RELEASE</version>
+	<version>1.1.0-RELEASE</version>
 	<packaging>war</packaging>
 
 	<name>ghop-core</name>
@@ -64,8 +64,6 @@
                                         <arguments>
                                             <argument>clone</argument>
                                             <argument>--depth=1</argument>
-                                            <argument>-b</argument>
-                                            <argument>visual-part</argument>
                                             <!-- Moving .git folder out of static components -->
                                             <argument>--separate-git-dir</argument>
                                             <argument>.git</argument>
@@ -125,6 +123,7 @@
 		<assertj-core.version>3.6.1</assertj-core.version>
 
 		<reference-explorer.version>0.1.1-RELEASE</reference-explorer.version>
+        <vcf-explorer.version>1.1.1-RELEASE</vcf-explorer.version>
 
 		<!-- Application deploying properties -->
 		<project.deploy.server.protocol>http</project.deploy.server.protocol>
@@ -135,14 +134,6 @@
 		<project.deploy.server.password>tomcat</project.deploy.server.password>
 		<project.deploy.server.path>/ghop-core</project.deploy.server.path>
 	</properties>
-
-	<repositories>
-		<repository>
-			<id>artifactory</id>
-			<name>Parseq Lab Artifactory</name>
-			<url>http://maven.corp.parseq.pro:8081/artifactory/libs-release-local</url>
-		</repository>
-	</repositories>
 
 	<dependencies>
 		<dependency>
@@ -180,7 +171,7 @@
 		<dependency>
 		    <groupId>pro.parseq</groupId>
 		    <artifactId>vcf-explorer</artifactId>
-		    <version>1.0.0-RELEASE</version>
+		    <version>${vcf-explorer.version}</version>
 		</dependency>
 
 		<dependency>

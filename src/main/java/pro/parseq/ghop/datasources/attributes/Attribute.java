@@ -86,4 +86,11 @@ public interface Attribute<T extends Comparable<T>> extends Identifiable<Long> {
 	 * @return Collection of {@link FilterOperator} objects
 	 */
 	Collection<FilterOperator> operators();
+	
+	public static interface AttributeBuilder<T extends Comparable<T>> {
+		
+		public AttributeBuilder<T> description(String description);
+		public Attribute<T> build();
+		
+	}
 }

@@ -29,7 +29,6 @@ import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.Collectors;
-import java.util.stream.LongStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -43,15 +42,20 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 
 import pro.parseq.ghop.datasources.attributes.Attribute;
 import pro.parseq.ghop.datasources.attributes.AttributeType;
+import pro.parseq.ghop.datasources.filters.AttributeFilter;
+import pro.parseq.ghop.datasources.filters.FilterOperator;
+import pro.parseq.ghop.datasources.filters.FilterQuery;
 import pro.parseq.ghop.entities.Contig;
 import pro.parseq.ghop.entities.VariantBand;
 import pro.parseq.ghop.services.BufferedReferenceServiceClient;
 import pro.parseq.ghop.services.ReferenceService;
 import pro.parseq.ghop.services.RemoteReferenceService;
 import pro.parseq.ghop.services.configs.RefserviceConfig;
+import pro.parseq.ghop.utils.AttributeUtils;
 import pro.parseq.ghop.utils.GenomicCoordinate;
 import pro.parseq.ghop.utils.GenomicCoordinateComparator;
 
@@ -177,14 +181,15 @@ public class VcfFileDataSourceTest {
 				assertTrue(properties.get("VAL").asBoolean());
 
 				// Format properties
-				assertEquals("0/1", properties.get("test_sample/GT").asText());
+				assertEquals("0/1", properties.get(
+						String.format("test_sample%sGT", VcfFileDataSource.SAMPLE_ATTRIBUTE_DELIMETER)).asText());
 			})
 			.count();
 
 		assertEquals("Check variant count", 1, count);
 
 		count = vcfFileDataSource.getBands().stream()
-			.filter(band -> band.getName().equals(""))
+			.filter(band -> band.getName().equals("T>A"))
 			.peek(band -> {
 
 				JsonNode properties = band.getProperties();
@@ -218,7 +223,8 @@ public class VcfFileDataSourceTest {
 				assertTrue(!properties.get("VAL").asBoolean());
 
 				// Format properties
-				assertEquals("1/1", properties.get("test_sample/GT").asText());
+				assertEquals("1/1", properties.get(
+						String.format("test_sample%sGT", VcfFileDataSource.SAMPLE_ATTRIBUTE_DELIMETER)).asText());
 			})
 			.count();
 
@@ -227,7 +233,131 @@ public class VcfFileDataSourceTest {
 
 	@Test
 	public void testFilter() {
-		/* TODO: add implementation */
+		
+		Contig chr1 = new Contig("GRCh37.p13", "chr1");
+		GenomicCoordinate coordinateStart = new GenomicCoordinate(chr1, 1);
+		
+		VcfFileDataSource gatkVcf = new VcfFileDataSource(
+				null, getClass().getResourceAsStream("/gatk.vcf"), comparator, REFERENCE_NAME);
+		
+		gatkVcf.attributes().stream().forEach(attribute -> {
+			logger.debug("Attribute: {} of type: {}", attribute, attribute.getType());
+		});
+		
+		@SuppressWarnings("unchecked")
+		Attribute<String> refAttribute = (Attribute<String>) gatkVcf.attributes().stream()
+			.filter(attrib -> attrib.getName() == "REF")
+			.findFirst()
+			.get();
+		
+		AttributeFilter<String> refFilter = new AttributeFilter<String>(0, refAttribute, FilterOperator.EQUALS, 
+				Arrays.asList("A"), false);
+		
+		FilterQuery query = new FilterQuery(Arrays.asList(refFilter), null);
+		DataSource<VariantBand> filtered = gatkVcf.filter(query);
+		
+		assertEquals(5, filtered.getBands(coordinateStart, 0, 100).size());
+		
+		// Test enum filtering
+		VcfFileDataSource tvcVcf = new VcfFileDataSource(
+				null, getClass().getResourceAsStream("/tvc.vcf"), comparator, REFERENCE_NAME);
+		
+		// Test variant type filtering
+		@SuppressWarnings("unchecked")
+		Attribute<?> typeAttribute = (Attribute<String>) tvcVcf.attributes().stream()
+			.filter(attrib -> attrib.getName().equals("TYPE"))
+			.findFirst()
+			.get();
+		
+		logger.debug("Attribute class: {}", typeAttribute.getClass());
+		
+		assertNotNull("Check attribute presence", typeAttribute);
+		assertEquals("Check attribute type", AttributeType.SET, typeAttribute.getType());
+		assertEquals("Check attribute possible values", 
+				new HashSet<>(Arrays.asList("snp", "ins", "del", "mnp")), 
+				new HashSet<>(typeAttribute.getRange().getValues()));
+		
+		@SuppressWarnings({ "rawtypes", "unchecked" })
+		AttributeFilter indelFilter = new AttributeFilter(0, typeAttribute, FilterOperator.IN, 
+				Arrays.asList("del", "ins"), false);
+		
+		query = new FilterQuery(Arrays.asList(indelFilter), null);
+		filtered = tvcVcf.filter(query);
+		
+		filtered.getBands(coordinateStart, 0, 100).stream()
+			.forEach(band -> logger.debug("Band: {}", band));
+		
+		assertEquals(4, filtered.getBands(coordinateStart, 0, 100).size());
+		
+		// Test zygosity filtering
+		@SuppressWarnings("unchecked")
+		Attribute<?> zygosityAttribute = (Attribute<String>) tvcVcf.attributes().stream()
+			.filter(attrib -> attrib.getName().equals(
+					String.format("GenSeq-AIP-1%sGT", VcfFileDataSource.SAMPLE_ATTRIBUTE_DELIMETER)))
+			.findFirst()
+			.get();
+		
+		logger.debug("Attribute class: {}", zygosityAttribute.getClass());
+		
+		assertNotNull("Check attribute presence", zygosityAttribute);
+		assertEquals("Check attribute type", AttributeType.SET, zygosityAttribute.getType());
+		
+		String heterozygousState = "0/1";
+		String homozygousState = "1/1";
+		
+		assertEquals("Check attribute possible values", 
+				new HashSet<>(Arrays.asList(homozygousState, heterozygousState)), 
+				new HashSet<>(zygosityAttribute.getRange().getValues()));
+		
+		@SuppressWarnings({ "rawtypes", "unchecked" })
+		AttributeFilter homozygousFilter = new AttributeFilter(0, zygosityAttribute, FilterOperator.IN, 
+				Arrays.asList(homozygousState), false);
+		
+		tvcVcf.getBands(coordinateStart, 0, 100).stream().forEach(band -> {
+			logger.debug("Variant: {}, properties: {}", band, band.getProperties());
+		});
+		
+		query = new FilterQuery(Arrays.asList(homozygousFilter), null);
+		filtered = tvcVcf.filter(query);
+		
+		filtered.getBands(coordinateStart, 0, 100).stream()
+			.forEach(band -> logger.debug("Band: {}", band));
+		
+		assertEquals(38, filtered.getBands(coordinateStart, 0, 100).size());
+		
+		// Test non-string set Info filtering
+		@SuppressWarnings("unchecked")
+		Attribute<Double> pbAttribute = (Attribute<Double>) tvcVcf.attributes().stream()
+			.filter(attrib -> attrib.getName().equals("PB"))
+			.findFirst()
+			.get();
+		
+		AttributeFilter<Double> pbFilter = new AttributeFilter<>(0, pbAttribute, FilterOperator.IN, 
+				Arrays.asList(0.5), false);
+		
+		query = new FilterQuery(Arrays.asList(pbFilter), null);
+		filtered = tvcVcf.filter(query);
+		
+		assertEquals(143, filtered.getBands(coordinateStart, 0, 500).size());
+		
+		// Test non-string set Format filtering
+		@SuppressWarnings("unchecked")
+		Attribute<Integer> gqAttribute = (Attribute<Integer>) gatkVcf.attributes().stream()
+				.peek(it -> logger.debug("Attribute: {}", it))
+				.filter(attrib -> attrib.getName().equals(
+						String.format("20%sGQ", VcfFileDataSource.SAMPLE_ATTRIBUTE_DELIMETER)))
+				.findFirst()
+				.get();
+		
+		assertEquals("Check attribute type", AttributeType.SET, gqAttribute.getType());
+		
+		AttributeFilter<Integer> gqFilter = new AttributeFilter<>(0, gqAttribute, FilterOperator.IN, 
+				Arrays.asList(99), false);
+		
+		query = new FilterQuery(Arrays.asList(gqFilter), null);
+		filtered = gatkVcf.filter(query);
+		
+		assertEquals(35, filtered.getBands(coordinateStart, 0, 500).size());
 	}
 
 	@Test
@@ -235,10 +365,8 @@ public class VcfFileDataSourceTest {
 
 		Set<Attribute<?>> attributes = vcfFileDataSource.attributes();
 		assertNotNull("Attributes are created", attributes);
-
-		for (Attribute<?> attribute : attributes) {
-			logger.info("Attribute: {}, type: {}", attribute.getName(), attribute.getType());
-		}
+		
+		this.testAttributeDiversityAndType(attributes, AttributeUtils.DEFAULT_MAX_SET_CATEGORIES);
 
 		// Check VCF attributes
 		assertEquals("Check ID attribute", 1,
@@ -255,90 +383,126 @@ public class VcfFileDataSourceTest {
 						&& it.getType().equals(AttributeType.FLOAT)).count());
 		assertEquals("Check FILTER attribute", 1,
 				attributes.stream().filter(it -> it.getName().equals("FILTER")
-						&& it.getType().equals(AttributeType.ENUM)
+						&& it.getType().equals(AttributeType.SET)
 						&& it.getRange().getValues().size() == 2).count());
-		assertEquals("Check AN INFO attribute", 1,
-				attributes.stream().filter(it -> it.getName().equals("AN")
-						&& it.getType().equals(AttributeType.INTEGER)).count());
 		assertEquals("Check VAL INFO attribute", 1,
 				attributes.stream().filter(it -> it.getName().equals("VAL")
 						&& it.getType().equals(AttributeType.BOOLEAN)).count());
+		
+		// Note that due to low value diversity these attributes has type SET
+		assertEquals("Check AN INFO attribute", 1,
+				attributes.stream().filter(it -> it.getName().equals("AN")
+						&& it.getType().equals(AttributeType.SET)).count());
 		assertEquals("Check DLN INFO attribute", 1,
 				attributes.stream().filter(it -> it.getName().equals("DLN")
-						&& it.getType().equals(AttributeType.INTEGER)).count());
+						&& it.getType().equals(AttributeType.SET)).count());
 		assertEquals("Check LN INFO attribute", 1,
 				attributes.stream().filter(it -> it.getName().equals("LN")
-						&& it.getType().equals(AttributeType.INTEGER)).count());
+						&& it.getType().equals(AttributeType.SET)).count());
 		assertEquals("Check GT FORMAT attribute", 1,
-				attributes.stream().filter(it -> it.getName().equals("test_sample/GT")
-						&& it.getType().equals(AttributeType.ENUM)
+				attributes.stream()
+					.filter(it -> it.getName().equals(
+							String.format("test_sample%sGT", VcfFileDataSource.SAMPLE_ATTRIBUTE_DELIMETER))
+						&& it.getType().equals(AttributeType.SET)
 						&& new HashSet<>(it.getRange().getValues())
-						// NOTE: this Fromat.toString() may not be obvious
-							.equals(new HashSet<String>(Arrays.asList("[0/1]", "[1/1]", "[1/2]")))
+							.equals(new HashSet<String>(Arrays.asList("0/1", "1/1", "1/2")))
 				).count());
+
 	}
-
-	@Test
-	public void testCreateAttribute() {
-
-		String name = "TEST";
-		String description = "Test attribute";
-		int maxEnumCategories = 5;
-		Set<String> values = new HashSet<>(
-				Arrays.asList("a", "b", "c", "d"));
-
-		// Test with strings
-		Attribute<?> attribute = VcfFileDataSource.createAttributeForValues(name, description, values, maxEnumCategories);
-		assertEquals("Enum attribute is created with small number of categories",
-				AttributeType.ENUM, attribute.getType());
-		assertNotNull("Check id", attribute.getId());
-		assertEquals("Check name", name, attribute.getName());
-		assertEquals("Check description", description, attribute.getDescription());
-
-		assertNotNull("Check range", attribute.getRange());
-		assertEquals("Check range lower bound", "a", attribute.getRange().getLowerBound());
-		assertEquals("Check range lower bound", "d", attribute.getRange().getUpperBound());
-		assertEquals("Check range values", new ArrayList<String>(values), attribute.getRange().getValues());
-
-		values.add("e");
-		attribute = VcfFileDataSource.createAttributeForValues(name, description, values, maxEnumCategories);
-		assertEquals("Enum attribute is created when number of categories equals max allowed",
-				AttributeType.ENUM, attribute.getType());
-
-		values.add("f");
-		attribute = VcfFileDataSource.createAttributeForValues(name, description, values, maxEnumCategories);
-		assertEquals("String attribute is created when number of categories exceeds max allowed",
-				AttributeType.STRING, attribute.getType());
-		assertNotNull("Check id", attribute.getId());
-		assertEquals("Check name", name, attribute.getName());
-		assertEquals("Check description", description, attribute.getDescription());
-
-		// Test with custom class
-		Set<Long> longValues = LongStream.range(0, 5)
-				.mapToObj(it -> new Long(it))
-				.collect(Collectors.toSet());
-
-		attribute = VcfFileDataSource.createAttributeForValues(name, description, longValues, maxEnumCategories);
-		assertNotNull("Check id", attribute.getId());
-		assertEquals("Check name", name, attribute.getName());
-		assertEquals("Check description", description, attribute.getDescription());
-
-		assertNotNull("Check range", attribute.getRange());
-		assertEquals("Check range values", new ArrayList<Long>(longValues), attribute.getRange().getValues());
+	
+	/**
+	 * Test that attribute type is determined using attribute values diversity.
+	 * 
+	 * @param attributes attributes to test
+	 * @param maxNumberOfSetCategories how many values can have attribute to be SET attribute
+	 */
+	private void testAttributeDiversityAndType(Set<Attribute<?>> attributes, int maxNumberOfSetCategories) {
+		
+		// Check that attributes with low diversity has SET format
+		attributes.stream()
+			// Boolean attribute always has BOOLEAN type
+			.filter(attribute -> !attribute.getType().equals(AttributeType.BOOLEAN))
+			.filter(attribute -> attribute.getRange() != null && attribute.getRange().getValues() != null)
+			.filter(attribute -> attribute.getRange().getValues().size() <= maxNumberOfSetCategories)
+			.peek(attribute -> logger.debug("Checking attribute: {} with number of values: {} and type: {}",
+					attribute, attribute.getRange().getValues().size(), attribute.getType()))
+			.forEach(attribute -> {
+				
+				assertEquals("Attributes with low diversity has SET format", AttributeType.SET, attribute.getType());
+				
+			});
+		
+		// Check that attributes with broad diversity has non SET format
+		attributes.stream()
+			// Boolean attribute always has BOOLEAN type
+			.filter(attribute -> !attribute.getType().equals(AttributeType.BOOLEAN))
+			.filter(attribute -> attribute.getRange() == null 
+				|| attribute.getRange().getValues() == null
+				|| attribute.getRange().getValues().size() > maxNumberOfSetCategories
+			)
+			.peek(attribute -> logger.debug("Checking attribute: {} with type: {}",
+					attribute, attribute.getType()))
+			.forEach(attribute -> {
+				
+				assertFalse("Attributes with low diversity has SET format", attribute.getType().equals(AttributeType.SET));
+				
+			});
 	}
 	
 	@Test
-	public void testRealLifeVcfFiles() {
+	public void testDatabaseVcfFiles() {
 		
-		GenomicCoordinate coordinateStart = new GenomicCoordinate(new Contig("GRCh37.p13", "chr1"), 1);
-		
-		VcfFileDataSource torrentSuiteVcf = new VcfFileDataSource(
-				null, getClass().getResourceAsStream("/NIST_S_L001.vcf"), comparator, REFERENCE_NAME);
-		
-		assertEquals("Number of variants", 173, torrentSuiteVcf.rightBordersGenerants(1000, 
-				coordinateStart).size());
-		
-
+		VcfFileDataSource clinvar = new VcfFileDataSource(
+				null, getClass().getResourceAsStream("/clinvar.vcf"), comparator, REFERENCE_NAME);
+		this.testAttributeDiversityAndType(clinvar.attributes(), AttributeUtils.DEFAULT_MAX_SET_CATEGORIES);
 		
 	}
+	
+	@Test
+	public void testVariantCallersVcfFiles() {
+		
+		Contig chr1 = new Contig("GRCh37.p13", "chr1");
+		GenomicCoordinate coordinateStart = new GenomicCoordinate(chr1, 1);
+		
+		VcfFileDataSource gatkVcf = new VcfFileDataSource(
+				null, getClass().getResourceAsStream("/gatk.vcf"), comparator, REFERENCE_NAME);
+		
+		this.testAttributeDiversityAndType(gatkVcf.attributes(), AttributeUtils.DEFAULT_MAX_SET_CATEGORIES);
+		
+		assertEquals("Check total nuber of bands", 35, gatkVcf.getBands(coordinateStart, 0, 100).size());
+		
+		GenomicCoordinate firstBandStart = new GenomicCoordinate(chr1, 1);
+		Set<VariantBand> bands = gatkVcf.getBands(firstBandStart, 0, 2);
+		
+		assertEquals("First band retrieved", 1, bands.size());
+		
+		VariantBand band = bands.iterator().next();
+		
+		// Check first band
+		assertEquals(new GenomicCoordinate(chr1, 899), band.getStartCoord());
+		assertEquals(new GenomicCoordinate(chr1, 900), band.getEndCoord());
+		assertEquals("A>ATTTT", band.getName());
+		
+		JsonNode bandProperties = band.getProperties();
+		assertNotNull(bandProperties);
+		
+		// Check individual properties
+		assertEquals("", bandProperties.get("ID").asText());
+		assertEquals("A", bandProperties.get("REF").asText());
+		assertEquals("ATTTT", bandProperties.get("ALT").asText());
+		assertEquals(341.73, bandProperties.get("QUAL").asDouble(), Double.MIN_NORMAL);
+		assertTrue(bandProperties.get("FILTER").isArray());
+		
+		ArrayNode filters = (ArrayNode) bandProperties.get("FILTER");
+		assertEquals(0, filters.size());
+		
+		logger.debug("Properties: {}", bandProperties);
+		
+		VcfFileDataSource tvcVcf = new VcfFileDataSource(
+				null, getClass().getResourceAsStream("/tvc.vcf"), comparator, REFERENCE_NAME);
+		
+		this.testAttributeDiversityAndType(tvcVcf.attributes(), AttributeUtils.DEFAULT_MAX_SET_CATEGORIES);
+		
+	}
+ 
 }
