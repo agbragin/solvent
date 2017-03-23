@@ -45,7 +45,7 @@ public class AttributeFilterUtils {
 		}
 
 		Collection<?> values = entity.getValues().stream()
-				.map(v -> attribute.parseValue(v)).collect(Collectors.toList());
+				.map(attribute::parseValue).collect(Collectors.toList());
 
 		return new AttributeFilter(entity.getId(), attribute,
 				entity.getOperator(), values, entity.isIncludeNulls());

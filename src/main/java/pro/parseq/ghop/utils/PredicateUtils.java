@@ -22,12 +22,21 @@ import java.util.List;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.function.IntPredicate;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 
 import pro.parseq.ghop.datasources.attributes.Attribute;
+import pro.parseq.ghop.datasources.attributes.SetAttribute;
 import pro.parseq.ghop.datasources.filters.AttributeFilter;
 import pro.parseq.ghop.entities.AttributeFilterAggregateEntity;
 import pro.parseq.ghop.entities.Band;
@@ -39,6 +48,8 @@ import pro.parseq.ghop.utils.BedUtils.Region;
 
 public class PredicateUtils {
 
+	private static final Logger logger = LoggerFactory.getLogger(PredicateUtils.class);
+	
 	public static final Predicate<Region> regionIdentity = new Predicate<Region>() {
 
 		@Override
@@ -61,6 +72,9 @@ public class PredicateUtils {
 
 				Attribute<C> attribute = attributeFilter.getAttribute();
 				JsonNode property = t.getProperties().get(attribute.getName());
+				
+				logger.debug("Testing property: {} with attribute: {} of type: {}", property, attribute, attribute.getType());
+				
 				switch (attribute.getType()) {
 				case BOOLEAN:
 					switch (attributeFilter.getOperator()) {
@@ -154,13 +168,23 @@ public class PredicateUtils {
 								attribute, attributeFilter.getOperator());
 					}
 
-				case ENUM:
+				case SET:
 					switch (attributeFilter.getOperator()) {
 					case IN:
-						return attributeFilter.getValues().stream()
-								.anyMatch(value -> attribute
-										.parseValue(property.asText())
-										.compareTo(value) == 0);
+						
+						SetAttribute<C> setAttribute = (SetAttribute<C>) attributeFilter.getAttribute();
+						
+						Stream<JsonNode> propertyValues = property.isArray() ?
+								StreamSupport.stream(Spliterators.spliteratorUnknownSize(
+										((ArrayNode) property).iterator(), Spliterator.ORDERED), false) :
+								Stream.of(property);
+						
+						return propertyValues
+							.map(JsonNode::asText)
+							.map(setAttribute::parseValue)
+							.peek(it -> logger.debug("Attribute filter: {} contains: {}, {}", 
+									attributeFilter.getValues().iterator().next().getClass(), it, attributeFilter.getValues().contains(it)))
+							.anyMatch(attributeFilter.getValues()::contains);
 
 					default:
 						throw new UnsupportedAttributeFilterOperatorException(

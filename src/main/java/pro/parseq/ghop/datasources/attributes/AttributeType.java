@@ -24,5 +24,5 @@ public enum AttributeType {
 	INTEGER,
 	FLOAT,
 	BOOLEAN,
-	ENUM
+	SET
 }

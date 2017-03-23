@@ -21,11 +21,17 @@ package pro.parseq.ghop.datasources.attributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.hateoas.core.Relation;
 
 import pro.parseq.ghop.datasources.filters.FilterOperator;
+import pro.parseq.ghop.exceptions.IllegalAttributeValueException;
 
 /**
  * Any attribute that can be expressed as a set of values.
@@ -35,111 +41,70 @@ import pro.parseq.ghop.datasources.filters.FilterOperator;
  * @param <T> Type of underlying object
  */
 @Relation(collectionRelation = "attributes")
-public class SetAttribute<T extends Comparable<T>> implements Attribute<T> {
+public class SetAttribute<T extends Comparable<T>> extends AbstractAttribute<T> {
 
-	private final AbstractAttribute<T> attribute;
+	private static final Logger logger = LoggerFactory.getLogger(SetAttribute.class);
 	
-	protected SetAttribute(String name, String description, Set<T> values) {
-		// Create attribute range from set of values
-		AttributeRange<T> attributeRange = new AttributeRange<T>(new ArrayList<>(values));
-		
-		this.attribute = new AbstractAttribute<T>(name, AttributeType.ENUM, description, attributeRange) {
-			
-			@Override
-			public T parseValue(String s) {
-				return this.getRange().getValues()
-					.stream()
-					.filter(it -> it.toString().equals(s))
-					.findFirst().get();
-			}
-
-			@Override
-			public Collection<FilterOperator> operators() {
-				return Arrays.asList(FilterOperator.IN);
-			}
-			
-		};
-		
+	private final Map<String, T> valueMap;
+	private final Class<T> valueClass;
+	
+	protected SetAttribute(String name, String description, Set<? extends T> values, Class<T> valueClass) {
+		super(name, AttributeType.SET, description, new AttributeRange<T>(new ArrayList<T>(values)));
+		logger.debug("Creating SET attribute: {}, values: {}, class: {}", name, values, valueClass);
+		this.valueMap = values.stream()
+			.peek(it -> logger.trace("Value: {}, value class: {}", it, it.getClass()))
+			.collect(Collectors.toMap(Object::toString, Function.identity()));
+		this.valueClass = valueClass;
 	}
 	
 	@Override
 	public T parseValue(String s) {
-		return this.attribute.parseValue(s);
+		try {
+			logger.trace("Retrieving value of: {} Result: {}, class: {}", 
+					s, this.valueMap.get(s), this.valueMap.get(s).getClass());
+			return this.valueMap.get(s);
+		} catch (Exception e) {
+			throw new IllegalAttributeValueException(this, s);
+		}
 	}
 
 	@Override
 	public Collection<FilterOperator> operators() {
-		return this.attribute.operators();
-	}
-
-	@Override
-	public Long getId() {
-		return attribute.getId();
-	}
-
-	@Override
-	public String getName() {
-		return attribute.getName();
-	}
-
-	@Override
-	public AttributeType getType() {
-		return attribute.getType();
-	}
-
-	@Override
-	public String getDescription() {
-		return attribute.getDescription();
-	}
-
-	@Override
-	public AttributeRange<T> getRange() {
-		return attribute.getRange();
-	}
-
-	@Override
-	public int compare(T a, T b) {
-		return attribute.compare(a, b);
+		return Arrays.asList(FilterOperator.IN);
 	}
 	
-	@Override
-	public int hashCode() {
-		return this.attribute.hashCode();
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		return this.attribute.equals(obj);
-	}
-
-	@Override
-	public String toString() {
-		return this.attribute.toString();
+	public Class<T> getValueClass() {
+		return this.valueClass;
 	}
 	
-	public static class SetAttributeBuilder<T extends Comparable<T>> {
+	public static class SetAttributeBuilder<T extends Comparable<T>> implements AttributeBuilder<T> {
 		
 		private final String name;
 		private String description;
-		private Set<T> values;
+		private Set<? extends T> values;
+		private final Class<T> valueClass;
 		
-		public SetAttributeBuilder(String name) {
+		public SetAttributeBuilder(String name, Class<T> valueClass) {
 			this.name = name;
+			this.valueClass = valueClass;
 		}
 		
-		public SetAttributeBuilder<T> setDescription(String description) {
-			this.description = description;
-			return this;
-		}
-		
-		public SetAttributeBuilder<T> setValues(Set<T> values) {
+		public SetAttributeBuilder<T> values(Set<? extends T> values) {
 			this.values = values;
 			return this;
 		}
 		
-		public SetAttribute<T> build() {
-			return new SetAttribute<T>(this.name, this.description, this.values);
+		@Override
+		public SetAttributeBuilder<T> description(String description) {
+			this.description = description;
+			return this;
 		}
+		
+		@Override
+		public SetAttribute<T> build() {
+			return new SetAttribute<T>(this.name, this.description, this.values, this.valueClass);
+		}
+
 	}
 
 }

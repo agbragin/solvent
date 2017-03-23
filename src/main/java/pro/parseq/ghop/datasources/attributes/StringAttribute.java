@@ -44,7 +44,7 @@ public class StringAttribute extends AbstractAttribute<String> {
 				FilterOperator.LIKE, FilterOperator.ILIKE);
 	}
 
-	public static final class StringAttributeBuilder {
+	public static final class StringAttributeBuilder implements AttributeBuilder<String> {
 
 		private final String name;
 		private String description;
@@ -53,11 +53,13 @@ public class StringAttribute extends AbstractAttribute<String> {
 			this.name = name;
 		}
 
+		@Override
 		public StringAttributeBuilder description(String description) {
 			this.description = description;
 			return this;
 		}
 
+		@Override
 		public StringAttribute build() {
 			return new StringAttribute(name, description);
 		}

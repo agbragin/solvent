@@ -34,9 +34,20 @@ import pro.parseq.ghop.exceptions.IllegalBedFileDataLineException;
 
 public final class BedUtils {
 
+	private static final String HEADER_LINE_PATTERN = "(browser|track|#)[^\\n]+";
+	private static final Pattern headerLinePattern = Pattern.compile(HEADER_LINE_PATTERN);
+
 	private static final String DATA_LINE_DELIMITER = "\t";
-	private static final String DATA_LINE_PATTERN = "\\w+(\\t\\d+){2}(\\t[\\S\\s][^\\n]+)*";
+	private static final String DATA_LINE_PATTERN = "\\w+(\\t\\d+){2}(\\t[^\\t\\n]+)*";
 	private static final Pattern dataLinePattern = Pattern.compile(DATA_LINE_PATTERN);
+
+	public static final Predicate<String> isHeaderLine = new Predicate<String>() {
+
+		@Override
+		public boolean test(String line) {
+			return headerLinePattern.matcher(line).matches();
+		}
+	};
 
 	public static final Predicate<String> isDataLine = new Predicate<String>() {
 
@@ -69,7 +80,7 @@ public final class BedUtils {
 
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(bed))) {
 
-			return reader.lines().filter(BedUtils.isDataLine)
+			return reader.lines().filter(isHeaderLine.negate())
 					.map(BedUtils::parseRegion)
 					.map(bandBuilder::build)
 					.collect(Collectors.toList());

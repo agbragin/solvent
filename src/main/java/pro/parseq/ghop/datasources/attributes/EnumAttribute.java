@@ -33,7 +33,7 @@ public class EnumAttribute<T extends Enum<T>> extends SetAttribute<T> {
 	private final Class<T> declaringClass;
 
 	private EnumAttribute(String name, String description, Class<T> enumerationClass) {
-		super(name, description, EnumSet.allOf(enumerationClass));
+		super(name, description, EnumSet.allOf(enumerationClass), enumerationClass);
 		this.declaringClass = enumerationClass;
 	}
 
@@ -52,7 +52,7 @@ public class EnumAttribute<T extends Enum<T>> extends SetAttribute<T> {
 	};
 	
 	
-	public static class EnumAttributeBuilder<T extends Enum<T>> {
+	public static class EnumAttributeBuilder<T extends Enum<T>> implements AttributeBuilder<T> {
 		
 		private final String name;
 		private final Class<T> enumerationClass;
@@ -63,11 +63,13 @@ public class EnumAttribute<T extends Enum<T>> extends SetAttribute<T> {
 			this.enumerationClass = enumerationClass;
 		}
 
+		@Override
 		public EnumAttributeBuilder<T> description(String description) {
 			this.description = description;
 			return this;
 		}
 
+		@Override
 		public EnumAttribute<T> build() {
 			return new EnumAttribute<T>(name, description, enumerationClass);
 		}

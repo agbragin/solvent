@@ -28,6 +28,7 @@
 
     <!-- Tune loggers -->
     <logger name="pro.parseq.ghop.datasources.AbstractDataSource" level="info" />
+    <logger name="pro.parseq.ghop.utils.PredicateUtils" level="info" />
     <logger name="pro.parseq.ghop.datasources.VcfFileDataSource" level="info" />
     <logger name="pro.parseq.ghop.datasources.VcfFileDataSourceTest" level="debug" />
          

@@ -26,6 +26,12 @@ import org.springframework.hateoas.core.Relation;
 import pro.parseq.ghop.datasources.filters.FilterOperator;
 import pro.parseq.ghop.exceptions.IllegalAttributeValueException;
 
+/**
+ * 
+ * TODO: Consider parameter change from Integer to Long.
+ * Now this is impossible since VcfExplorer stores integer values as Integer.
+ *
+ */
 @Relation(collectionRelation = "attributes")
 public class IntegerAttribute extends AbstractAttribute<Integer> {
 
@@ -51,7 +57,7 @@ public class IntegerAttribute extends AbstractAttribute<Integer> {
 				FilterOperator.LESS, FilterOperator.LESSEQ);
 	}
 
-	public static final class IntegerAttributeBuilder {
+	public static final class IntegerAttributeBuilder implements AttributeBuilder<Integer> {
 
 		private final String name;
 		private String description;
@@ -61,6 +67,7 @@ public class IntegerAttribute extends AbstractAttribute<Integer> {
 			this.name = name;
 		}
 
+		@Override
 		public IntegerAttributeBuilder description(String description) {
 			this.description = description;
 			return this;
@@ -71,6 +78,7 @@ public class IntegerAttribute extends AbstractAttribute<Integer> {
 			return this;
 		}
 
+		@Override
 		public IntegerAttribute build() {
 			return new IntegerAttribute(name, description, range);
 		}
