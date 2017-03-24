@@ -4,12 +4,12 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>pro.parseq</groupId>
-	<artifactId>ghop-core</artifactId>
+	<artifactId>solvent</artifactId>
 	<version>1.1.0-RELEASE</version>
 	<packaging>war</packaging>
 
-	<name>ghop-core</name>
-	<description>gHop core data access and retrieval functionality</description>
+	<name>solvent</name>
+	<description>Concentrate browser server component</description>
 
 	<parent>
 		<groupId>org.springframework.boot</groupId>
@@ -46,6 +46,7 @@
         <profile>
             <id>standalone</id>
             <build>
+                <finalName>concentrate-${version}</finalName>
                 <plugins>
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
