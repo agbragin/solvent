@@ -44,7 +44,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import pro.parseq.ghop.datasources.attributes.Attribute;
 import pro.parseq.ghop.datasources.attributes.AttributeRange;
-import pro.parseq.ghop.datasources.attributes.AttributeType;
 import pro.parseq.ghop.datasources.attributes.DoubleAttribute.DoubleAttributeBuilder;
 import pro.parseq.ghop.datasources.attributes.InclusionType;
 import pro.parseq.ghop.datasources.attributes.SetAttribute.SetAttributeBuilder;

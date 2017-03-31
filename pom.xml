@@ -4,12 +4,12 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>pro.parseq</groupId>
-	<artifactId>ghop-core</artifactId>
+	<artifactId>solvent</artifactId>
 	<version>1.1.0-RELEASE</version>
 	<packaging>war</packaging>
 
-	<name>ghop-core</name>
-	<description>gHop core data access and retrieval functionality</description>
+	<name>solvent</name>
+	<description>Concentrate browser server component</description>
 
 	<parent>
 		<groupId>org.springframework.boot</groupId>
@@ -46,6 +46,7 @@
         <profile>
             <id>standalone</id>
             <build>
+                <finalName>concentrate-${project.version}</finalName>
                 <plugins>
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
@@ -68,7 +69,7 @@
                                             <argument>--separate-git-dir</argument>
                                             <argument>.git</argument>
                                             <!-- TODO: change this after project transfer to GitHub -->
-                                            <argument>http://stash.corp.parseq.pro/stash/scm/sb/ghop-webclient.git</argument>
+                                            <argument>http://stash.corp.parseq.pro/stash/scm/conc/concentrate.git</argument>
                                             <argument>${project.build.finalName}/META-INF/resources</argument>
                                         </arguments>
                                     </configuration>
@@ -132,7 +133,7 @@
 		<project.deploy.server.name>parseq-test-server</project.deploy.server.name>
 		<project.deploy.server.username>tomcat</project.deploy.server.username>
 		<project.deploy.server.password>tomcat</project.deploy.server.password>
-		<project.deploy.server.path>/ghop-core</project.deploy.server.path>
+		<project.deploy.server.path>/${name}</project.deploy.server.path>
 	</properties>
 
 	<dependencies>
