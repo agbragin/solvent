@@ -24,10 +24,12 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -52,6 +54,7 @@ import pro.parseq.ghop.datasources.filters.FilterQuery;
 import pro.parseq.ghop.entities.Contig;
 import pro.parseq.ghop.entities.Track;
 import pro.parseq.ghop.entities.VariantBand;
+import pro.parseq.ghop.exceptions.VcfFileDataSourceException;
 import pro.parseq.ghop.utils.AttributeUtils;
 import pro.parseq.ghop.utils.GenomicCoordinate;
 import pro.parseq.ghop.utils.IdGenerationUtils;
@@ -69,6 +72,7 @@ import pro.parseq.vcf.utils.InputStreamVcfReader;
 import pro.parseq.vcf.utils.VcfGrammar;
 import pro.parseq.vcf.utils.VcfParserImpl;
 
+
 /**
  * VCF file as data source for genome browser.
  * 
@@ -85,12 +89,14 @@ public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 	 * Sample-specific properties are flattened by concatenation with sample names with this delimeter
 	 */
 	final static String SAMPLE_ATTRIBUTE_DELIMETER = ":";
+	final static String INFO_ATTRIBUTE_PREFIX = "INFO:";
+	final static String FORMAT_ATTRIBUTE_PREFIX = "FORMAT:";
 
 	private final String referenceGenomeName;
 	private final VcfExplorer vcfExplorer;
 	private final Track track;
 
-	// Using ordered set to preserve attributes ordering
+	// Using ordered set to preserve attributes order
 	private final Set<Attribute<?>> attributes;
 
 	public VcfFileDataSource(Track track, File vcfFile,
@@ -99,6 +105,14 @@ public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 		this(track, new FileInputStream(vcfFile), comparator, referenceGenomeName);
 	}
 
+	/**
+	 * Create data source from VCF file provided.
+	 * 
+	 * @param track track to bind data source to
+	 * @param vcfStream VCF file content
+	 * @param comparator GenomicCoordinate compatator object
+	 * @param referenceGenomeName name of reference genome for the track
+	 */
 	public VcfFileDataSource(Track track, InputStream vcfStream,
 			Comparator<GenomicCoordinate> comparator, String referenceGenomeName) {
 
@@ -109,15 +123,15 @@ public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 	private VcfFileDataSource(VcfExplorer vcfExplorer, Track track,
 			Comparator<GenomicCoordinate> comparator, String referenceGenomeName) {
 
-		this(VcfFileDataSource.getBands(vcfExplorer, track, referenceGenomeName),
+		this(getBands(vcfExplorer, track, referenceGenomeName),
 				vcfExplorer, track, comparator, referenceGenomeName);
 	}
 
 	private VcfFileDataSource(VcfExplorer vcfExplorer, Track track,
 			Comparator<GenomicCoordinate> comparator, String referenceGenomeName, FilterQuery query) {
 		
-		this(VcfFileDataSource.filterBands(
-				VcfFileDataSource.getBands(vcfExplorer, track, referenceGenomeName), query),
+		this(filterBands(
+				getBands(vcfExplorer, track, referenceGenomeName), query),
 				vcfExplorer, track, comparator, referenceGenomeName);
 	}
 
@@ -126,7 +140,7 @@ public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 
 		super(IdGenerationUtils.generateDataSourceId(), bands, comparator);
 
-		this.attributes = VcfFileDataSource.getAttributes(vcfExplorer);
+		this.attributes = getAttributes(vcfExplorer);
 		// TODO: check that the same reference genome is used when creating VCF
 		this.referenceGenomeName = referenceGenomeName;
 		this.track = track;
@@ -176,6 +190,8 @@ public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 			VcfFile vcfData = vcfExplorer.getVcfData();
 
 			return vcfData.getVariants().stream()
+				.peek(variant -> logger.debug("Creating band from variant: {}:{}:{}>{}", 
+						variant.getChrom(), variant.getPos(), variant.getRef(), variant.getAlt()))
 				.map(variant -> {
 					// Node that we perform conversion to ZBHO here
 					GenomicCoordinate startCoord = new GenomicCoordinate(
@@ -186,20 +202,25 @@ public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 							variant.getPos() + variant.getRef().length() - 1);
 
 					String variantName = generateVariantName(variant);
-					JsonNode properties = VcfFileDataSource.getProperties(vcfExplorer, variant);
+					JsonNode properties = getProperties(vcfExplorer, variant);
 
 					return new VariantBand(track, startCoord, endCoord, variantName, properties);
 				})
 				.collect(Collectors.toList());
 		} catch (Exception e) {
 			throw new IllegalStateException(
-					String.format("VCF file provided has wrong format: %s", e.getMessage()));
+					String.format("VCF file provided has wrong format. Exception: %s", e));
 		}
 	}
 	
-	
+	/**
+	 * Generate variant name to be used in cases when variant ID is undefined.
+	 * 
+	 * @param variant variant object to generate name for
+	 * @return variant name
+	 */
 	private static String generateVariantName(Variant variant) {
-		
+		logger.debug("Generating name for the variant: {}", variant);
 		String variantName = variant.getIds().stream()
 				.map(Object::toString)
 				.collect(Collectors.joining(";"));
@@ -209,10 +230,15 @@ public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 		}
 		
 		return variantName;
-		
 	}
 	
-
+	/**
+	 * Generate properties for a given variant as a JsonNode suitable to be used in PredicateUtils.
+	 * 
+	 * @param vcfExplorer
+	 * @param variant
+	 * @return
+	 */
 	static JsonNode getProperties(VcfExplorer vcfExplorer, Variant variant) {
 
 		ObjectNode properties = JsonNodeFactory.instance.objectNode();
@@ -230,10 +256,10 @@ public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 			.forEach(filterNode::add);
 
 		// Info attributes
-		VcfFileDataSource.putInfoFields(properties, vcfExplorer, variant.getInfo()); 
+		putInfoFields(properties, vcfExplorer, variant.getInfo()); 
 
 		// Format attributes
-		VcfFileDataSource.putFormatFields(properties, vcfExplorer, variant.getFormats());
+		putFormatFields(properties, vcfExplorer, variant.getFormats());
 
 		return properties;
 	}
@@ -241,212 +267,148 @@ public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 	private static ObjectNode putInfoFields(ObjectNode properties, VcfExplorer vcfExplorer, 
 			Map<String, List<? extends Serializable>> infos) {
 
-		vcfExplorer.getVcfData().getInfos().entrySet().stream()
-			.forEach(entry -> {
-
+		logger.debug("Processing infos: {} and storing to properties: {}", infos, properties);
+		
+		// Processing all but flag fields
+		// Flag fields should be processed separately since in case they are false 
+		// we have no way to retrieve them from variant data
+		infos.entrySet().stream()
+			.peek(entry -> logger.debug("Creating INFO field: {} from info data: {}", 
+					entry.getKey(), entry.getValue()))
+			.forEachOrdered(entry -> {
 				String infoKey = entry.getKey();
-				Information infoAttribute = entry.getValue();
-
-				List<? extends Serializable> infoValues = infos.get(infoKey);
-
-				String number = infoAttribute.getNumber();
-				switch (number) {
-				case ".":
-					// No value FLAG field
-					logger.debug("INFO flag field: {}", infoKey);
-					if (infoValues != null) {
-						properties.put(infoKey, true);
-					} else {
-						properties.put(infoKey, false);
-					}
-
-					break;
-				case "1":
-					// Single-value field
-					if (infoValues == null) {
-						return;
+				String infoName = createInfoAttributeName(infoKey);
+				List<? extends Serializable> infoValues = entry.getValue();
+				
+				Information infoFieldDescription = vcfExplorer.getVcfData().getInfos().get(infoKey);
+				if (infoFieldDescription == null) {
+					throw new VcfFileDataSourceException(String.format(
+							"Information field %s for is absent from VCF header",
+							infoKey));
+				}
+				
+				// If Flag, do nothing here
+				if (infoFieldDescription.getType().equals(InfoFieldType.FLAG)) {
+					return;
+				}
+				
+				Class<?> attributeClass = getInfoAttributeClass(infoFieldDescription.getType());
+				
+				if (isMultiValueNumber(infoFieldDescription.getNumber())) {
+					// Field is declared as having multiple values
+					// Store values in the array
+					addArrayNode(properties, infoName, attributeClass, infoValues);
+					
+				} else {
+					// Field is declared as having single value
+					// Check this and add value to properties according to its declared type
+					if (infoValues.size() != 1) {
+						throw new VcfFileDataSourceException(String.format(
+								"Info field {} is not multivalued but multiple values found: {}",
+								infoFieldDescription.getId(), infoValues));
 					}
 					
-					logger.debug("INFO value field: {}, values: {}", infoKey, infoValues);
-					Serializable value = infoValues.get(0);
-
-					switch (infoAttribute.getType()) {
-						case FLOAT:
-							properties.put(infoKey, (Double) value);
-							break;
-						case INTEGER:
-							properties.put(infoKey, (Integer) value);
-							break;
-						case CHARACTER:
-							/* Fall through */
-						case STRING:
-							properties.put(infoKey, (String) value);
-							break;
-						case FLAG:
-							/**
-							 * Maybe it is more reliable to do this
-							 * validation in VCF Explorer itself,
-							 * since FLAG never can be a value field
-							 * 
-							 * TODO: get rid of this validation
-							 * when it would be implemented in VCF Explorer
-							 */
-							logger.error("INFO field {} typed as Flag has Number=1: {}",
-									infoKey, infoValues);
-							break;
-						default:
-							/**
-							 * In fact, this will never be reached, if VCF Explorer works properly,
-							 * as it validate field type while parsing phase
-							 */
-							logger.error("Unknown INFO field type: {}", infoAttribute.getType());
-					}
-					break;
-				default:
-					/*
-					 * Flag field should be specified with Number = 0 according to VCF specification
-					 * 
-					 * TODO: clarify practical '.' and '0' usage as Number designator in Flag info fields
-					 *  
-					 */
-					if (infoAttribute.getType().equals(InfoFieldType.FLAG)) {
-						logger.debug("INFO flag field: {}", infoKey);
-						if (infoValues != null) {
-							properties.put(infoKey, true);
-						} else {
-							properties.put(infoKey, false);
-						}
-						return;
-					}
+					addNode(properties, infoName, attributeClass, infoValues.get(0));
 					
-					/**
-					 * This validation is performed only because VCF Explorer
-					 * doesn't support per genotype number parameter value yet
-					 */
-					if (infoValues == null) {
-						return;
-					}
-					
-					if (!isMultiValueNumber(number)) {
+				}
+			});
+		
+		// Processing flag fields
+		vcfExplorer.getVcfData().getInfos().entrySet().stream()
+			.filter(entry -> entry.getValue().getType().equals(InfoFieldType.FLAG))
+			.map(Entry::getKey)
+			.forEachOrdered(infoId -> {
+				String infoName = createInfoAttributeName(infoId);
+				if (infos.containsKey(infoId)) {
+					properties.put(infoName, true);
+				} else {
+					properties.put(infoName, false);
+				}
+			});
 
-						logger.error("Field {} has unknown \"Number\" parameter: \"{}\". "
-								+ "Skip metadata addition.", infoKey, infoAttribute.getNumber());
-						break;
-					}
-
-					// Multi-value field, i.e. with exact values number or one of the {A,R,G}
-					logger.debug("INFO array field: {}", infoKey);
-					ArrayNode arrayNode = properties.putArray(infoKey);
-
-					switch (infoAttribute.getType()) {
-						case FLOAT:
-							infoValues.stream().forEach(it -> arrayNode.add((Double) it));
-							break;
-						case INTEGER:
-							infoValues.stream().forEach(it -> arrayNode.add((Integer) it));
-							break;
-						case CHARACTER:
-							/* Fall through */
-						case STRING:
-							infoValues.stream().forEach(it -> arrayNode.add((String) it));
-							break;
-						default:
-							/**
-							 * In fact, this will never be reached, if VCF Explorer works properly,
-							 * as it validate field type while parsing phase
-							 */
-							logger.error("Wrong array INFO field type: {}, array field: {}", infoAttribute.getType(), infoKey);
-					}
-			}
-		});
-
+		logger.debug("Properties with info fields added: {}", properties);
 		return properties;
 	}
 
 	private static ObjectNode putFormatFields(ObjectNode properties, VcfExplorer vcfExplorer, 
 			Map<String, Map<String, List<? extends Serializable>>> formatFields) {
 
+		logger.debug("Processing formats: {} and storing to properties: {}", formatFields, properties);
 		formatFields.entrySet().stream()
+			// For each sample
 			.forEachOrdered(sampleEntry -> {
 
 				String sample = sampleEntry.getKey();
 				Map<String, List<? extends Serializable>> formats = sampleEntry.getValue();
 
+				// For each format in sample
 				formats.entrySet().stream()
+					.peek(entry -> logger.debug("Processing entry: {} for sample: {}", entry.getKey(), sample))
 					.forEachOrdered(formatEntry -> {
 
-						String propertyName = VcfFileDataSource
-								.createFormatAttributeName(sample, formatEntry.getKey());
+						String formatKey = formatEntry.getKey();
+						List<? extends Serializable> formatValues = formatEntry.getValue();
+						
+						String formatName = createFormatAttributeName(sample, formatKey);
 						Format format = vcfExplorer.getVcfData().getFormats()
-								.get(formatEntry.getKey());
+								.get(formatKey);
+						
+						if (format == null) {
+							throw new VcfFileDataSourceException(String.format(
+									"Format field {} is declared for variant but missed in metadata {}",
+									formatKey, vcfExplorer.getVcfData().getFormats()));
+						}
+						
+						Class<?> attributeClass = getFormatAttributeClass(format.getType());
+						
+						logger.debug("Format name: {}, class: {}, values: {}", formatName, attributeClass, formatValues);
+						
+						if (isMultiValueNumber(format.getNumber())) {
 
-						String number = format.getNumber();
-						switch (number) {
-							case "1":
-								switch (format.getType()) {
-									case FLOAT:
-										properties.put(propertyName,
-												(Double) formatEntry.getValue().get(0));
-										break;
-
-									case INTEGER:
-										properties.put(propertyName,
-												(Integer) formatEntry.getValue().get(0));
-										break;
-
-									case CHARACTER:
-									case STRING:
-										properties.put(propertyName,
-												(String) formatEntry.getValue().get(0));
-										break;
-
-									default:
-										logger.error("Unknown INFO field type: {}", format.getType());
-								}
-
-								break;
-
-							default:
-								// TODO: see the same comment for INFO fields
-								if (!isMultiValueNumber(number)) {
-
-									logger.error("Field {} has unknown \"Number\" parameter: \"{}\". "
-											+ "Skip metadata addition.",
-											format.getId(), format.getNumber());
-									break;
-								}
-
-								// Multi-value field, i.e. with exact values number or one of the {A,R,G}
-								ArrayNode arrayNode = properties.putArray(propertyName);
-
-								switch (format.getType()) {
-									case FLOAT:
-										formatEntry.getValue().stream()
-												.forEach(it -> arrayNode.add((Double) it));
-										break;
-									case INTEGER:
-										formatEntry.getValue().stream()
-												.forEach(it -> arrayNode.add((Integer) it));
-										break;
-									case CHARACTER:
-										/* Fall through */
-									case STRING:
-										formatEntry.getValue().stream()
-												.forEach(it -> arrayNode.add((String) it));
-										break;
-									default:
-										/**
-										 * In fact, this will never be reached, if VCF Explorer works properly,
-										 * as it validate field type while parsing phase
-										 */
-										logger.error("Unknown FORMAT field type: {}",
-												format.getType());
-								}
+							addArrayNode(properties, formatName, attributeClass, formatValues);
+							
+						} else {
+							if (formatValues.size() != 1) {
+								throw new VcfFileDataSourceException(String.format(
+										"Format field %s is not multivalued but multiple (or no) values found: %s",
+										formatKey, formatValues));
+							}
+							
+							addNode(properties, formatName, attributeClass, formatValues.get(0));
+							
 						}
 					});
 			});
 
+		logger.debug("Properties with format fields added: {}", properties);
 		return properties;
+	}
+
+	
+	private static void addArrayNode(ObjectNode parent, String name, 
+			Class<?> clazz, Collection<? extends Serializable> values) {
+		
+		ArrayNode arrayNode = parent.putArray(name);
+		
+		if (clazz.equals(Integer.class)) {
+			values.stream().forEach(it -> arrayNode.add((Integer) it));
+		} else if (clazz.equals(Double.class)) {
+			values.stream().forEach(it -> arrayNode.add((Double) it));
+		} else {
+			values.stream().forEach(it -> arrayNode.add(it.toString()));
+		}
+	}
+	
+	private static void addNode(ObjectNode parent, String name, Class<?> clazz, Serializable value) {
+		
+		if (clazz.equals(Integer.class)) {
+			parent.put(name, (Integer) value);
+		} else if (clazz.equals(Double.class)) {
+			parent.put(name, (Double) value);
+		} else {
+			parent.put(name, value.toString());
+		}
+		
 	}
 
 	/**
@@ -462,19 +424,25 @@ public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 		return new LinkedHashSet<>(
 				Stream.concat(
 				// Get common VCF attributes
-				VcfFileDataSource.generateVcfAttributes(vcfFile).stream(),
+				generateVcfAttributes(vcfFile).stream(),
 					// Add file-specific attributes
 					Stream.concat(
 						// Add INFO attributes
-						VcfFileDataSource.createInfoAttributes(vcfFile).stream(),
+						createInfoAttributes(vcfFile).stream(),
 						// Add FORMAT attributes
-						VcfFileDataSource.createFormatAttributes(vcfFile).stream()
+						createFormatAttributes(vcfFile).stream()
 				)).collect(Collectors.toList())
 			);
 	}
-
-	private static String createFormatAttributeName(String sampleName, String formatName) {
-		return String.format("%s%s%s", sampleName, SAMPLE_ATTRIBUTE_DELIMETER, formatName);
+	
+	static String createInfoAttributeName(String infoName) {
+		return String.format("%s%s", 
+				INFO_ATTRIBUTE_PREFIX, infoName);
+	}
+	
+	static String createFormatAttributeName(String sampleName, String formatName) {
+		return String.format("%s%s%s%s", 
+				FORMAT_ATTRIBUTE_PREFIX, sampleName, SAMPLE_ATTRIBUTE_DELIMETER, formatName);
 	}
 
 	/**
@@ -500,7 +468,7 @@ public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 							.range(new AttributeRange<Double>(
 									0.0, Double.POSITIVE_INFINITY, InclusionType.OPEN))
 							.build(),
-					VcfFileDataSource.generateFilterAttribute(vcfFile)
+					generateFilterAttribute(vcfFile)
 				).stream()
 				.collect(Collectors.toSet());
 		
@@ -554,7 +522,10 @@ public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 				Set<? extends Comparable> values = (Set<? extends Comparable>) getInfoValues(info, vcfFile);
 
 				return createInfoAttribute(
-						info.getId(), info.getDescription(), info.getType(), values);
+						createInfoAttributeName(info.getId()), 
+						info.getDescription(), 
+						info.getType(), 
+						values);
 			})
 			.collect(Collectors.toSet());
 	}
@@ -594,7 +565,7 @@ public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 					// Generate format attributes for every sample
 					return vcfFile.getSampleNames().stream()
 							.map(sample -> createFormatAttribute(
-									VcfFileDataSource.createFormatAttributeName(
+									createFormatAttributeName(
 											sample, format.getId()),
 									format.getDescription(),
 									format.getType(),
@@ -640,6 +611,7 @@ public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 		}
 		
 	}
+
 	
 	private static <T extends Comparable<T>> Attribute<T> createFormatAttribute(String name, String description,
 			FormatFieldType type, Set<T> values) {
@@ -768,10 +740,12 @@ public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 	public static final boolean isMultiValueNumber(String number) {
 
 		return PredicateUtils.isNumeric
-				.or(isPerAlleleNumber)
-				.or(isPerAlleleWithRefNumber)
-				.or(isPerGenotypeNumber)
-				.or(isUnbounded)
-				.test(number);
+					.and(it -> Integer.valueOf(it) > 1)
+					.test(number) 
+				|| isPerAlleleNumber
+					.or(isPerAlleleWithRefNumber)
+					.or(isPerGenotypeNumber)
+					.or(isUnbounded)
+					.test(number);
 	}
 }

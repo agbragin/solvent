@@ -25,9 +25,11 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -38,6 +40,7 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.logging.ClasspathLoggingApplicationListener;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -46,6 +49,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 
 import pro.parseq.ghop.datasources.attributes.Attribute;
 import pro.parseq.ghop.datasources.attributes.AttributeType;
+import pro.parseq.ghop.datasources.attributes.SetAttribute;
 import pro.parseq.ghop.datasources.filters.AttributeFilter;
 import pro.parseq.ghop.datasources.filters.FilterOperator;
 import pro.parseq.ghop.datasources.filters.FilterQuery;
@@ -170,19 +174,22 @@ public class VcfFileDataSourceTest {
 								.collect(Collectors.toList()));
 
 				// Info properties
-				assertEquals(8, properties.get("LN").asInt());
-				assertEquals(1, properties.get("DLN").asInt());
+				logger.debug("Checking properties: {}", properties);
+				assertEquals(8, properties.get(VcfFileDataSource.INFO_ATTRIBUTE_PREFIX + "LN").asInt());
+				assertEquals(1, properties.get(VcfFileDataSource.INFO_ATTRIBUTE_PREFIX + "DLN").asInt());
 				assertEquals(Stream.of(0).collect(Collectors.toList()), 
 						StreamSupport.stream(Spliterators.spliteratorUnknownSize(
-										properties.get("AN").iterator(), Spliterator.ORDERED),
+										properties.get(VcfFileDataSource.INFO_ATTRIBUTE_PREFIX  + "AN").iterator(),
+											Spliterator.ORDERED),
 										false)
 								.map(node -> node.asInt())
 								.collect(Collectors.toList()));
-				assertTrue(properties.get("VAL").asBoolean());
+				assertTrue(properties.get(VcfFileDataSource.INFO_ATTRIBUTE_PREFIX + "VAL").asBoolean());
 
 				// Format properties
 				assertEquals("0/1", properties.get(
-						String.format("test_sample%sGT", VcfFileDataSource.SAMPLE_ATTRIBUTE_DELIMETER)).asText());
+						String.format(VcfFileDataSource.FORMAT_ATTRIBUTE_PREFIX + "test_sample%sGT",
+								VcfFileDataSource.SAMPLE_ATTRIBUTE_DELIMETER)).asText());
 			})
 			.count();
 
@@ -211,20 +218,21 @@ public class VcfFileDataSourceTest {
 								.collect(Collectors.toList()));
 
 				// Info properties
-				assertEquals(9, properties.get("LN").asInt());
-				assertEquals(2, properties.get("DLN").asInt());
+				assertEquals(9, properties.get(VcfFileDataSource.INFO_ATTRIBUTE_PREFIX + "LN").asInt());
+				assertEquals(2, properties.get(VcfFileDataSource.INFO_ATTRIBUTE_PREFIX + "DLN").asInt());
 				assertEquals(Stream.of(0, 1, 2).collect(Collectors.toList()), 
 						StreamSupport.stream(
 						Spliterators.spliteratorUnknownSize(
-										properties.get("AN").iterator(), Spliterator.ORDERED),
+										properties.get(VcfFileDataSource.INFO_ATTRIBUTE_PREFIX + "AN").iterator(),
+											Spliterator.ORDERED),
 										false)
 								.map(node -> node.asInt())
 								.collect(Collectors.toList()));
-				assertTrue(!properties.get("VAL").asBoolean());
+				assertTrue(!properties.get(VcfFileDataSource.INFO_ATTRIBUTE_PREFIX + "VAL").asBoolean());
 
 				// Format properties
 				assertEquals("1/1", properties.get(
-						String.format("test_sample%sGT", VcfFileDataSource.SAMPLE_ATTRIBUTE_DELIMETER)).asText());
+						String.format(VcfFileDataSource.FORMAT_ATTRIBUTE_PREFIX + "test_sample%sGT", VcfFileDataSource.SAMPLE_ATTRIBUTE_DELIMETER)).asText());
 			})
 			.count();
 
@@ -246,7 +254,7 @@ public class VcfFileDataSourceTest {
 		
 		@SuppressWarnings("unchecked")
 		Attribute<String> refAttribute = (Attribute<String>) gatkVcf.attributes().stream()
-			.filter(attrib -> attrib.getName() == "REF")
+			.filter(attrib -> attrib.getName().equals("REF"))
 			.findFirst()
 			.get();
 		
@@ -265,7 +273,8 @@ public class VcfFileDataSourceTest {
 		// Test variant type filtering
 		@SuppressWarnings("unchecked")
 		Attribute<?> typeAttribute = (Attribute<String>) tvcVcf.attributes().stream()
-			.filter(attrib -> attrib.getName().equals("TYPE"))
+			.filter(attrib -> attrib.getName().equals(
+					VcfFileDataSource.createInfoAttributeName("TYPE")))
 			.findFirst()
 			.get();
 		
@@ -293,7 +302,7 @@ public class VcfFileDataSourceTest {
 		@SuppressWarnings("unchecked")
 		Attribute<?> zygosityAttribute = (Attribute<String>) tvcVcf.attributes().stream()
 			.filter(attrib -> attrib.getName().equals(
-					String.format("GenSeq-AIP-1%sGT", VcfFileDataSource.SAMPLE_ATTRIBUTE_DELIMETER)))
+					VcfFileDataSource.createFormatAttributeName("GenSeq-AIP-1", "GT")))
 			.findFirst()
 			.get();
 		
@@ -328,7 +337,8 @@ public class VcfFileDataSourceTest {
 		// Test non-string set Info filtering
 		@SuppressWarnings("unchecked")
 		Attribute<Double> pbAttribute = (Attribute<Double>) tvcVcf.attributes().stream()
-			.filter(attrib -> attrib.getName().equals("PB"))
+			.filter(attrib -> attrib.getName().equals(
+					VcfFileDataSource.createInfoAttributeName("PB")))
 			.findFirst()
 			.get();
 		
@@ -345,7 +355,7 @@ public class VcfFileDataSourceTest {
 		Attribute<Integer> gqAttribute = (Attribute<Integer>) gatkVcf.attributes().stream()
 				.peek(it -> logger.debug("Attribute: {}", it))
 				.filter(attrib -> attrib.getName().equals(
-						String.format("20%sGQ", VcfFileDataSource.SAMPLE_ATTRIBUTE_DELIMETER)))
+						VcfFileDataSource.createFormatAttributeName("20", "GQ")))
 				.findFirst()
 				.get();
 		
@@ -358,6 +368,7 @@ public class VcfFileDataSourceTest {
 		filtered = gatkVcf.filter(query);
 		
 		assertEquals(35, filtered.getBands(coordinateStart, 0, 500).size());
+		
 	}
 
 	@Test
@@ -386,23 +397,27 @@ public class VcfFileDataSourceTest {
 						&& it.getType().equals(AttributeType.SET)
 						&& it.getRange().getValues().size() == 2).count());
 		assertEquals("Check VAL INFO attribute", 1,
-				attributes.stream().filter(it -> it.getName().equals("VAL")
+				attributes.stream().filter(it -> it.getName().equals(
+							VcfFileDataSource.createInfoAttributeName("VAL"))
 						&& it.getType().equals(AttributeType.BOOLEAN)).count());
 		
 		// Note that due to low value diversity these attributes has type SET
 		assertEquals("Check AN INFO attribute", 1,
-				attributes.stream().filter(it -> it.getName().equals("AN")
+				attributes.stream().filter(it -> it.getName().equals(
+							VcfFileDataSource.createInfoAttributeName("AN"))
 						&& it.getType().equals(AttributeType.SET)).count());
 		assertEquals("Check DLN INFO attribute", 1,
-				attributes.stream().filter(it -> it.getName().equals("DLN")
+				attributes.stream().filter(it -> it.getName().equals(
+							VcfFileDataSource.createInfoAttributeName("DLN"))
 						&& it.getType().equals(AttributeType.SET)).count());
 		assertEquals("Check LN INFO attribute", 1,
-				attributes.stream().filter(it -> it.getName().equals("LN")
+				attributes.stream().filter(it -> it.getName().equals(
+							VcfFileDataSource.createInfoAttributeName("LN"))
 						&& it.getType().equals(AttributeType.SET)).count());
 		assertEquals("Check GT FORMAT attribute", 1,
 				attributes.stream()
 					.filter(it -> it.getName().equals(
-							String.format("test_sample%sGT", VcfFileDataSource.SAMPLE_ATTRIBUTE_DELIMETER))
+							VcfFileDataSource.createFormatAttributeName("test_sample", "GT"))
 						&& it.getType().equals(AttributeType.SET)
 						&& new HashSet<>(it.getRange().getValues())
 							.equals(new HashSet<String>(Arrays.asList("0/1", "1/1", "1/2")))
@@ -456,6 +471,39 @@ public class VcfFileDataSourceTest {
 				null, getClass().getResourceAsStream("/clinvar.vcf"), comparator, REFERENCE_NAME);
 		this.testAttributeDiversityAndType(clinvar.attributes(), AttributeUtils.DEFAULT_MAX_SET_CATEGORIES);
 		
+		// Collect attributes to id map to check by attribute name
+		Map<String, Attribute<?>> attributeMap = clinvar.attributes().stream()
+			.peek(it -> logger.debug("Attribute: {}, name: {}, type: {}",
+					it, it.getName(), it.getType()))
+			.collect(Collectors.toMap(Attribute::getName, Function.identity()));
+		
+		// Test work with attributes with Number=. and non Flag types
+		Attribute<?> clnalle = attributeMap.get(VcfFileDataSource.createInfoAttributeName("CLNALLE"));
+		assertNotNull(clnalle);
+		assertEquals(AttributeType.SET, clnalle.getType());
+		assertEquals(Integer.class, ((SetAttribute<?>) clnalle).getValueClass());
+		
+		Contig chr1 = new Contig("GRCh37.p13", "chr1");
+		GenomicCoordinate coordinateStart = new GenomicCoordinate(chr1, 1);
+		Set<VariantBand> bands = clinvar.getBands(coordinateStart, 0, 1);
+		VariantBand band = bands.iterator().next();
+		assertNotNull(band);
+		
+		// Check property
+		JsonNode attribute = band.getProperties().get(VcfFileDataSource.createInfoAttributeName("CLNALLE"));
+		assertNotNull(attribute);
+		assertTrue(attribute.isArray());
+		assertEquals("Check property value", 1, ((ArrayNode) attribute).get(0).asInt());
+		
+		
+		Attribute<?> clnsig = attributeMap.get(VcfFileDataSource.createInfoAttributeName("CLNSIG"));
+		assertNotNull(clnsig);
+		assertEquals(AttributeType.STRING, clnsig.getType());
+		
+		attribute = band.getProperties().get(VcfFileDataSource.createInfoAttributeName("CLNSIG"));
+		assertNotNull(attribute);
+		assertTrue(attribute.isArray());
+		assertEquals("Check property value", "0|5", ((ArrayNode) attribute).get(0).asText());
 	}
 	
 	@Test
@@ -464,6 +512,7 @@ public class VcfFileDataSourceTest {
 		Contig chr1 = new Contig("GRCh37.p13", "chr1");
 		GenomicCoordinate coordinateStart = new GenomicCoordinate(chr1, 1);
 		
+		// GATK
 		VcfFileDataSource gatkVcf = new VcfFileDataSource(
 				null, getClass().getResourceAsStream("/gatk.vcf"), comparator, REFERENCE_NAME);
 		
@@ -498,10 +547,16 @@ public class VcfFileDataSourceTest {
 		
 		logger.debug("Properties: {}", bandProperties);
 		
+		// TVC
 		VcfFileDataSource tvcVcf = new VcfFileDataSource(
 				null, getClass().getResourceAsStream("/tvc.vcf"), comparator, REFERENCE_NAME);
 		
 		this.testAttributeDiversityAndType(tvcVcf.attributes(), AttributeUtils.DEFAULT_MAX_SET_CATEGORIES);
+		
+		// SnVer
+		//VcfFileDataSource snverVcf = new VcfFileDataSource(
+		//		null, getClass().getResourceAsStream("/snver.vcf"), comparator, REFERENCE_NAME);
+		
 		
 	}
  

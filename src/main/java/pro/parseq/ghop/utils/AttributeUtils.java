@@ -76,6 +76,7 @@ public class AttributeUtils {
 	public static <T extends Comparable<T>> Attribute<T> createAttributeForValues(String name, String description, 
 			Set<? extends T> values, Class<T> attributeClazz, AttributeRange<T> attributeRange, int maxSetCategories) {
 		
+		logger.debug("Building attribute: {}", name);
 		AttributeBuilder<T> attributeBuilder;
 		
 		if (attributeClazz.equals(Boolean.class)) {
