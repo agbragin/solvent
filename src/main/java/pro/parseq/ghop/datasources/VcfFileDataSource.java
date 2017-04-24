@@ -38,7 +38,11 @@ import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.hateoas.core.Relation;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -81,6 +85,8 @@ import pro.parseq.vcf.utils.VcfParserImpl;
  * @author abragin
  *
  */
+@Relation(collectionRelation = "dataSources")
+@JsonInclude(Include.NON_NULL)
 public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 
 	private static final Logger logger = LoggerFactory.getLogger(VcfFileDataSource.class);
@@ -98,6 +104,9 @@ public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 
 	// Using ordered set to preserve attributes order
 	private final Set<Attribute<?>> attributes;
+
+	@JsonUnwrapped
+	protected FilterQuery query;
 
 	public VcfFileDataSource(Track track, File vcfFile,
 			Comparator<GenomicCoordinate> comparator, String referenceGenomeName)
@@ -129,10 +138,11 @@ public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 
 	private VcfFileDataSource(VcfExplorer vcfExplorer, Track track,
 			Comparator<GenomicCoordinate> comparator, String referenceGenomeName, FilterQuery query) {
-		
+
 		this(filterBands(
 				getBands(vcfExplorer, track, referenceGenomeName), query),
 				vcfExplorer, track, comparator, referenceGenomeName);
+		this.query = query;
 	}
 
 	private VcfFileDataSource(List<VariantBand> bands, VcfExplorer vcfExplorer,
