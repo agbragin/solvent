@@ -66,10 +66,12 @@
                                             <argument>clone</argument>
                                             <argument>--depth=1</argument>
                                             <!-- Moving .git folder out of static components -->
+                                            <argument>-b</argument>
+                                            <argument>master</argument>
                                             <argument>--separate-git-dir</argument>
                                             <argument>.git</argument>
                                             <!-- TODO: change this after project transfer to GitHub -->
-                                            <argument>http://stash.corp.parseq.pro/stash/scm/conc/concentrate.git</argument>
+                                            <argument>https://github.com/parseq/concentrate.git</argument>
                                             <argument>${project.build.finalName}/META-INF/resources</argument>
                                         </arguments>
                                     </configuration>
