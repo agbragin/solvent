@@ -3,6 +3,8 @@
 Solvent is a server-side counterpart of [Concentrate](https://github.com/parseq/concentrate). 
 Taken together they form a client-server system for genomic data visualization and filtering.
 
+To getting started with Concentrate, please, see [Getting Started](https://github.com/parseq/solvent/wiki/Getting-Started) guide.
+
 ## Requirements
 
 To compile and run Solvent as back-end component you need the following: 
