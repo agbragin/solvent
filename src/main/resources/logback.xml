@@ -28,10 +28,10 @@
     </appender>
 
     <!-- Tune loggers -->
-    <logger name="pro.parseq.ghop.datasources.AbstractDataSource" level="info" />
-    <logger name="pro.parseq.ghop.utils.AttributeUtils" level="info" />
-    <logger name="pro.parseq.ghop.datasources.VcfFileDataSource" level="info" />
-    <logger name="pro.parseq.ghop.datasources.VcfFileDataSourceTest" level="debug" />
+    <logger name="pro.parseq.solvent.datasources.AbstractDataSource" level="info" />
+    <logger name="pro.parseq.solvent.utils.AttributeUtils" level="info" />
+    <logger name="pro.parseq.solvent.datasources.VcfFileDataSource" level="info" />
+    <logger name="pro.parseq.solvent.datasources.VcfFileDataSourceTest" level="debug" />
          
     <root level="info">
         <appender-ref ref="console" />
