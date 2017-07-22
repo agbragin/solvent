@@ -20,6 +20,7 @@ package pro.parseq.solvent.datasources;
 
 import static org.junit.Assert.*;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -82,7 +83,7 @@ public class VcfFileDataSourceTest {
 	private VcfFileDataSource vcfFileDataSource;
 
 	@Before
-	public void createVcfFileDataSource() {
+	public void createVcfFileDataSource() throws IOException {
 
 		refservice = new BufferedReferenceServiceClient(new RemoteReferenceService(config));
 		comparator = new GenomicCoordinateComparator(refservice);
@@ -241,7 +242,7 @@ public class VcfFileDataSourceTest {
 	}
 
 	@Test
-	public void testFilter() {
+	public void testFilter() throws IOException {
 		
 		Contig chr1 = new Contig("GRCh37.p13", "chr1");
 		GenomicCoordinate coordinateStart = new GenomicCoordinate(chr1, 1);
@@ -375,7 +376,7 @@ public class VcfFileDataSourceTest {
 	@Test
 	public void testAttributes() {
 
-		Set<Attribute<?>> attributes = vcfFileDataSource.attributes();
+		List<Attribute<?>> attributes = vcfFileDataSource.attributes();
 		assertNotNull("Attributes are created", attributes);
 		
 		this.testAttributeDiversityAndType(attributes, AttributeUtils.DEFAULT_MAX_SET_CATEGORIES);
@@ -432,7 +433,7 @@ public class VcfFileDataSourceTest {
 	 * @param attributes attributes to test
 	 * @param maxNumberOfSetCategories how many values can have attribute to be SET attribute
 	 */
-	private void testAttributeDiversityAndType(Set<Attribute<?>> attributes, int maxNumberOfSetCategories) {
+	private void testAttributeDiversityAndType(List<Attribute<?>> attributes, int maxNumberOfSetCategories) {
 		
 		// Check that attributes with low diversity has SET format
 		attributes.stream()
@@ -466,7 +467,7 @@ public class VcfFileDataSourceTest {
 	}
 	
 	@Test
-	public void testDatabaseVcfFiles() {
+	public void testDatabaseVcfFiles() throws IOException {
 		
 		VcfFileDataSource clinvar = new VcfFileDataSource(
 				null, getClass().getResourceAsStream("/clinvar.vcf"), comparator, REFERENCE_NAME);
@@ -508,7 +509,7 @@ public class VcfFileDataSourceTest {
 	}
 	
 	@Test
-	public void testVariantCallersVcfFiles() {
+	public void testVariantCallersVcfFiles() throws IOException {
 		
 		Contig chr1 = new Contig("GRCh37.p13", "chr1");
 		GenomicCoordinate coordinateStart = new GenomicCoordinate(chr1, 1);

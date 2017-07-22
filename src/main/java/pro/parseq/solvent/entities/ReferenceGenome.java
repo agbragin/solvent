@@ -18,14 +18,18 @@
  *******************************************************************************/
 package pro.parseq.solvent.entities;
 
+import java.io.Serializable;
+
 import org.springframework.hateoas.core.Relation;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Relation(collectionRelation = "referenceGenomes")
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ReferenceGenome {
+public class ReferenceGenome implements Serializable {
 
+	private static final long serialVersionUID = -7015675974517262485L;
+	
 	private String id;
 
 	protected ReferenceGenome() {}

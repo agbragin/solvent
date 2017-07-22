@@ -16,32 +16,28 @@
  *     You should have received a copy of the GNU Affero General Public License
  *     along with CONC. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package pro.parseq.solvent.datasources.filters;
+package pro.parseq.solvent.exceptions;
 
-import java.io.Serializable;
-import java.util.List;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
-import pro.parseq.solvent.entities.AttributeFilterAggregateEntity;
+@ResponseStatus(code = HttpStatus.NOT_FOUND, reason = "Path does not exist")
+public class FilesystemPathNotFoundException extends RuntimeException {
 
-public class FilterQuery implements Serializable {
+	private static final long serialVersionUID = -8056074390129357723L;
 
-	private static final long serialVersionUID = -4389117574457124548L;
-	
-	private final List<AttributeFilter<?>> filters;
-	private final List<AttributeFilterAggregateEntity> aggregates;
+	private static final String MESSAGE_TEMPLATE = "Path doesn't exist: %s";
 
-	public FilterQuery(List<AttributeFilter<?>> filters,
-			List<AttributeFilterAggregateEntity> aggregates) {
+	private final String path;
 
-		this.filters = filters;
-		this.aggregates = aggregates;
+	public FilesystemPathNotFoundException(String path) {
+
+		super(String.format(MESSAGE_TEMPLATE, path));
+
+		this.path = path;
 	}
 
-	public List<AttributeFilter<?>> getFilters() {
-		return filters;
-	}
-
-	public List<AttributeFilterAggregateEntity> getAggregates() {
-		return aggregates;
+	public String getPath() {
+		return path;
 	}
 }

@@ -18,8 +18,6 @@
  *******************************************************************************/
 package pro.parseq.solvent.rest;
 
-import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.Resource;
@@ -32,7 +30,6 @@ import org.springframework.web.bind.annotation.RestController;
 import pro.parseq.solvent.datasources.MasterDataSource;
 import pro.parseq.solvent.entities.Contig;
 import pro.parseq.solvent.entities.ReferenceGenome;
-import pro.parseq.solvent.entities.ReferenceGenomeContigs;
 import pro.parseq.solvent.utils.HateoasUtils;
 
 @RestController
@@ -48,12 +45,10 @@ public class ReferenceController {
 	}
 
 	@RequestMapping("/{referenceGenome:.+}")
-	public Resource<ReferenceGenomeContigs> getReferenceGenome(
+	public Resources<Contig> getReferenceGenome(
 			@PathVariable ReferenceGenome referenceGenome) {
 
-		List<String> contigIds = masterDataSource.getReferenceService().getContigs(referenceGenome.getId())
-				.stream().map(Contig::getId).collect(Collectors.toList());
-
-		return HateoasUtils.referenceGenomeContigsResource(referenceGenome, contigIds);
+		return HateoasUtils.contigResources(referenceGenome,
+				masterDataSource.getReferenceService().getContigs(referenceGenome.getId()));
 	}
 }

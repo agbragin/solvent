@@ -77,11 +77,11 @@ public class BandTest {
 		logger.info("Test different types band instantiation and differentiation");
 
 		Band fooFirstHalfBedBand = new BedBand(BED_TRACK, FOO_START, FOO_INTERNAL, FOO_REGION, PROPERTIES_SET);
-		logger.info("Got contig's first half BED band: {}, it's hash is equals to: {}",
+		logger.info("Got contig's first half BED band: {}, it's hash equals is: {}",
 				fooFirstHalfBedBand, fooFirstHalfBedBand.hashCode());
 
 		Band fooFirstHalfBedBandDuplicate = new BedBand(BED_TRACK, FOO_START, FOO_INTERNAL, FOO_REGION, PROPERTIES_SET_DUPLICATE);
-		logger.info("Got duplicate contig's first half BED band: {}, it's hash is equals to: {}",
+		logger.info("Got duplicate contig's first half BED band: {}, it's hash is: {}",
 				fooFirstHalfBedBandDuplicate, fooFirstHalfBedBandDuplicate.hashCode());
 
 		assertThat(fooFirstHalfBedBand.hashCode()).isEqualTo(fooFirstHalfBedBandDuplicate.hashCode());

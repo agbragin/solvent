@@ -30,7 +30,7 @@ public class Folder {
 	private final String path;
 
 	/**
-	 * Absolute paths of files contained in the folder
+	 * File names contained in the folder
 	 */
 	private final List<String> files;
 

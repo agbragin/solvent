@@ -18,6 +18,7 @@
  *******************************************************************************/
 package pro.parseq.solvent.utils;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -30,8 +31,10 @@ import pro.parseq.solvent.exceptions.UnknownContigException;
 import pro.parseq.solvent.exceptions.UnknownReferenceGenomeException;
 import pro.parseq.solvent.services.ReferenceService;
 
-public class GenomicCoordinateComparator implements Comparator<GenomicCoordinate> {
+public class GenomicCoordinateComparator implements Comparator<GenomicCoordinate>, Serializable {
 
+	private static final long serialVersionUID = -6266883086575557861L;
+	
 	private ReferenceService referenceService;
 
 	public GenomicCoordinateComparator(ReferenceService referenceService) {

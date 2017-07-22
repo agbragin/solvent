@@ -18,6 +18,8 @@
  *******************************************************************************/
 package pro.parseq.solvent.utils;
 
+import java.io.Serializable;
+
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -33,8 +35,10 @@ import pro.parseq.solvent.entities.Contig;
  * 
  * @author Alexander Afanasyev <a href="mailto:aafanasyev@parseq.pro">aafanasyev@parseq.pro</a>
  */
-public class GenomicCoordinate {
+public class GenomicCoordinate implements Serializable {
 
+	private static final long serialVersionUID = 5346054987140516108L;
+	
 	private final Contig contig;
 	private final long coord;
 

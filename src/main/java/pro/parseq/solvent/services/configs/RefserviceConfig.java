@@ -18,12 +18,17 @@
  *******************************************************************************/
 package pro.parseq.solvent.services.configs;
 
+import java.io.Serializable;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
-public class RefserviceConfig {
+public class RefserviceConfig implements Serializable {
 
+	private static final long serialVersionUID = -2140482836436882208L;
+
+	// TODO: consider defensive copying on deserialization (see Item 76 from Effective Java)
 	@Value("${refservice.remote.connection.scheme}")
 	private String connectionScheme;
 

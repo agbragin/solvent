@@ -18,6 +18,7 @@
  *******************************************************************************/
 package pro.parseq.solvent.datasources.attributes;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -27,8 +28,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 @JsonInclude(Include.NON_NULL)
-public class AttributeRange<T extends Comparable<T>> {
+public class AttributeRange<T extends Comparable<T>> implements Serializable {
 
+	private static final long serialVersionUID = 2755584092555417097L;
+	
 	private final T lowerBound;
 	private final T upperBound;
 

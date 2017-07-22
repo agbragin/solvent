@@ -11,6 +11,8 @@ import pro.parseq.solvent.utils.GenomicCoordinateUtils;
 
 public abstract class AbstractReferenceService implements ReferenceService {
 
+	private static final long serialVersionUID = 2513705412124291362L;
+
 	protected abstract String getSequence(GenomicCoordinate coord, int count);
 
 	@Override

@@ -29,25 +29,39 @@ import java.util.stream.Collectors;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.Resources;
+import org.springframework.hateoas.core.EmbeddedWrapper;
+import org.springframework.hateoas.core.EmbeddedWrappers;
 
 import pro.parseq.solvent.datasources.DataSource;
 import pro.parseq.solvent.datasources.DataSourceBands;
 import pro.parseq.solvent.datasources.DataSourceType;
 import pro.parseq.solvent.datasources.QueryForBands;
 import pro.parseq.solvent.datasources.attributes.Attribute;
+import pro.parseq.solvent.entities.Contig;
 import pro.parseq.solvent.entities.ReferenceGenome;
-import pro.parseq.solvent.entities.ReferenceGenomeContigs;
 import pro.parseq.solvent.entities.Track;
-import pro.parseq.solvent.rest.*;
+import pro.parseq.solvent.rest.AttributeController;
+import pro.parseq.solvent.rest.BandController;
+import pro.parseq.solvent.rest.DataSourceController;
+import pro.parseq.solvent.rest.DataSourceTypeController;
+import pro.parseq.solvent.rest.ReferenceController;
+import pro.parseq.solvent.rest.TrackController;
+
 
 public class HateoasUtils {
 
-	public static final Resources<Resource<Track>> trackResources(Set<Track> tracks) {
+	public static final Resources<?> trackResources(Set<Track> tracks) {
 
 		Link selfLink = linkTo(methodOn(TrackController.class).getTracks())
 				.withSelfRel();
 		Set<Resource<Track>> trackResources = tracks.stream()
 				.map(HateoasUtils::trackResource).collect(Collectors.toSet());
+		
+		if (trackResources.isEmpty()) {
+			EmbeddedWrappers wrappers = new EmbeddedWrappers(false);
+			EmbeddedWrapper wrapper = wrappers.emptyCollectionOf(Track.class);
+			return new Resources<>(Arrays.asList(wrapper), selfLink);
+		}
 
 		return new Resources<>(trackResources, selfLink);
 	}
@@ -67,12 +81,12 @@ public class HateoasUtils {
 	}
 
 	public static final Resources<Resource<Attribute<?>>> trackAttributeResources(Track track,
-			Set<Attribute<?>> attributes) {
+			List<Attribute<?>> attributes) {
 
 		Link selfLink = linkTo(methodOn(TrackController.class)
 				.getTrackAttributes(track)).withSelfRel();
-		Set<Resource<Attribute<?>>> attributeResources = attributes.stream()
-				.map(HateoasUtils::attributeResource).collect(Collectors.toSet());
+		List<Resource<Attribute<?>>> attributeResources = attributes.stream()
+				.map(HateoasUtils::attributeResource).collect(Collectors.toList());
 
 		return new Resources<>(attributeResources, selfLink);
 	}
@@ -138,13 +152,13 @@ public class HateoasUtils {
 		return new Resources<>(referenceGenomeResources, selfLink);
 	}
 
-	public static final Resource<ReferenceGenomeContigs> referenceGenomeContigsResource(
-			ReferenceGenome referenceGenome, List<String> contigs) {
+	public static final Resources<Contig> contigResources(
+			ReferenceGenome referenceGenome, List<Contig> contigs) {
 
 		Link selfLink = linkTo(methodOn(ReferenceController.class)
 				.getReferenceGenome(referenceGenome)).withSelfRel();
 
-		return new Resource<>(new ReferenceGenomeContigs(contigs), selfLink);
+		return new Resources<>(contigs, selfLink);
 	}
 
 	public static final Resources<Resource<DataSource<?>>> dataSourceResources(Set<DataSource<?>> dataSources) {
@@ -169,7 +183,7 @@ public class HateoasUtils {
 	}
 
 	public static final Resources<Resource<Attribute<?>>> dataSourceAttributeResources(
-			DataSource<?> dataSource, Set<Attribute<?>> attributes) {
+			DataSource<?> dataSource, List<Attribute<?>> attributes) {
 
 		Link selfLink = linkTo(methodOn(DataSourceController.class)
 				.getDataSourceAttributes(dataSource.getId())).withSelfRel();

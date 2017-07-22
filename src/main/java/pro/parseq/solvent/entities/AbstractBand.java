@@ -8,6 +8,8 @@ import pro.parseq.solvent.utils.GenomicCoordinate;
 
 public abstract class AbstractBand implements Band {
 
+	private static final long serialVersionUID = -481387878947254082L;
+
 	@JsonUnwrapped
 	private final Track track;
 
@@ -15,7 +17,9 @@ public abstract class AbstractBand implements Band {
 	private final GenomicCoordinate endCoord;
 	private final String name;
 
-	public  abstract boolean equals(Object obj);
+	public abstract boolean equals(Object obj);
+	
+	public abstract int hashCode();
 
 	public AbstractBand(Track track, GenomicCoordinate startCoord, GenomicCoordinate endCoord, String name) {
 
@@ -43,11 +47,6 @@ public abstract class AbstractBand implements Band {
 	@Override
 	public String getName() {
 		return name;
-	}
-
-	@Override
-	public int hashCode() {
-		return HashCodeBuilder.reflectionHashCode(this);
 	}
 
 	@Override

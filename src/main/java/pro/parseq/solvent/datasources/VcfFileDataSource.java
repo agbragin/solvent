@@ -18,15 +18,17 @@
  *******************************************************************************/
 package pro.parseq.solvent.datasources;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -36,13 +38,14 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.hateoas.core.Relation;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -50,8 +53,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import pro.parseq.solvent.datasources.attributes.Attribute;
 import pro.parseq.solvent.datasources.attributes.AttributeRange;
-import pro.parseq.solvent.datasources.attributes.InclusionType;
 import pro.parseq.solvent.datasources.attributes.DoubleAttribute.DoubleAttributeBuilder;
+import pro.parseq.solvent.datasources.attributes.InclusionType;
 import pro.parseq.solvent.datasources.attributes.SetAttribute.SetAttributeBuilder;
 import pro.parseq.solvent.datasources.attributes.StringAttribute.StringAttributeBuilder;
 import pro.parseq.solvent.datasources.filters.FilterQuery;
@@ -90,6 +93,8 @@ import pro.parseq.vcf.utils.VcfParserImpl;
 public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 
 	private static final Logger logger = LoggerFactory.getLogger(VcfFileDataSource.class);
+	
+	private static final long serialVersionUID = -6868850850338800637L;
 
 	/**
 	 * Sample-specific properties are flattened by concatenation with sample names with this delimeter
@@ -99,54 +104,76 @@ public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 	final static String FORMAT_ATTRIBUTE_PREFIX = "FORMAT:";
 
 	private final String referenceGenomeName;
-	private final VcfExplorer vcfExplorer;
+	// Exclude VCF explorer from serialization, store binary data instead
+	private transient VcfExplorer vcfExplorer;
+	private byte[] vcfData;
 	private final Track track;
 
 	// Using ordered set to preserve attributes order
-	private final Set<Attribute<?>> attributes;
+	private final List<Attribute<?>> attributes;
 
 	@JsonUnwrapped
 	protected FilterQuery query;
 
-	public VcfFileDataSource(Track track, File vcfFile,
-			Comparator<GenomicCoordinate> comparator, String referenceGenomeName)
-					throws FileNotFoundException {
-		this(track, new FileInputStream(vcfFile), comparator, referenceGenomeName);
-	}
-
 	/**
 	 * Create data source from VCF file provided.
 	 * 
-	 * @param track track to bind data source to
-	 * @param vcfStream VCF file content
-	 * @param comparator GenomicCoordinate compatator object
-	 * @param referenceGenomeName name of reference genome for the track
+	 * @param track
+	 * @param vcfFile
+	 * @param comparator
+	 * @param referenceGenomeName
+	 * @throws IOException
 	 */
-	public VcfFileDataSource(Track track, InputStream vcfStream,
-			Comparator<GenomicCoordinate> comparator, String referenceGenomeName) {
-
-		this(new VcfExplorer(new InputStreamVcfReader(vcfStream), new VcfParserImpl()),
-				track, comparator, referenceGenomeName);
+	public VcfFileDataSource(Track track, File vcfFile,
+			Comparator<GenomicCoordinate> comparator, String referenceGenomeName)
+					throws IOException {
+		
+		this(track, new FileInputStream(vcfFile), comparator, referenceGenomeName);
+		
 	}
 
-	private VcfFileDataSource(VcfExplorer vcfExplorer, Track track,
+
+	public VcfFileDataSource(Track track, InputStream vcfStream,
+			Comparator<GenomicCoordinate> comparator, String referenceGenomeName) throws IOException {
+
+		this(track, IOUtils.toByteArray(vcfStream), comparator, referenceGenomeName);
+
+	}
+	
+	private VcfFileDataSource(Track track, byte[] vcfData, 
 			Comparator<GenomicCoordinate> comparator, String referenceGenomeName) {
+
+		this(createVcfExplorer(vcfData), track, comparator, referenceGenomeName, vcfData);
+
+	}
+	
+	private static VcfExplorer createVcfExplorer(byte[] vcfData) {
+		return new VcfExplorer(new InputStreamVcfReader(new ByteArrayInputStream(vcfData)), 
+				new VcfParserImpl());
+	}
+
+
+	private VcfFileDataSource(VcfExplorer vcfExplorer, Track track,
+			Comparator<GenomicCoordinate> comparator, String referenceGenomeName, byte[] vcfData) {
 
 		this(getBands(vcfExplorer, track, referenceGenomeName),
-				vcfExplorer, track, comparator, referenceGenomeName);
+				vcfExplorer, track, comparator, referenceGenomeName, vcfData);
+
 	}
 
 	private VcfFileDataSource(VcfExplorer vcfExplorer, Track track,
-			Comparator<GenomicCoordinate> comparator, String referenceGenomeName, FilterQuery query) {
+			Comparator<GenomicCoordinate> comparator, String referenceGenomeName, FilterQuery query, byte[] vcfData) {
 
 		this(filterBands(
 				getBands(vcfExplorer, track, referenceGenomeName), query),
-				vcfExplorer, track, comparator, referenceGenomeName);
+				vcfExplorer, track, comparator, referenceGenomeName, vcfData);
+		
 		this.query = query;
+
 	}
 
 	private VcfFileDataSource(List<VariantBand> bands, VcfExplorer vcfExplorer,
-			Track track, Comparator<GenomicCoordinate> comparator, String referenceGenomeName) {
+			Track track, Comparator<GenomicCoordinate> comparator, String referenceGenomeName, byte[] vcfData) {
 
 		super(IdGenerationUtils.generateDataSourceId(), bands, comparator);
 
@@ -155,6 +182,34 @@ public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 		this.referenceGenomeName = referenceGenomeName;
 		this.track = track;
 		this.vcfExplorer = vcfExplorer;
+		this.vcfData = vcfData;
+
+	} 
+
+	
+	/**
+	 * Custom serialization method.
+	 * 
+	 * @param out
+	 * @throws IOException
+	 */
+	private void writeObject(ObjectOutputStream out) throws IOException {
+		logger.debug("Serializing VcfFileDataSource");
+		out.defaultWriteObject();
+	}
+	
+	/**
+	 * Custom deserialization method.
+	 * 
+	 * @param in
+	 * @throws IOException
+	 * @throws ClassNotFoundException
+	 */
+	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+		logger.debug("Deserializing VcfFileDataSource");
+		in.defaultReadObject();
+		logger.debug("VCF data: {}", this.vcfData);
+		this.vcfExplorer = createVcfExplorer(this.vcfData);
 	}
 
 	@Override
@@ -166,11 +221,12 @@ public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 	public DataSource<VariantBand> filter(FilterQuery query) {
 
 		return new VcfFileDataSource(
-				this.vcfExplorer, this.track, this.getComparator(), this.referenceGenomeName, query);
+				this.vcfExplorer, this.track, this.getComparator(), this.referenceGenomeName, query,
+				vcfData);
 	}
 
 	@Override
-	public Set<Attribute<?>> attributes() {
+	public List<Attribute<?>> attributes() {
 		return attributes;
 	}
 
@@ -437,14 +493,13 @@ public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 	 * Get attributes from VCF file provided.
 	 * 
 	 * @param vcfExplorer vcfExplorer object to retrieve attributes for.
-	 * @return set of Attribute objects
+	 * @return List of Attribute objects
 	 */
-	private static Set<Attribute<?>> getAttributes(VcfExplorer vcfExplorer) {
+	private static List<Attribute<?>> getAttributes(VcfExplorer vcfExplorer) {
 
 		VcfFile vcfFile = vcfExplorer.getVcfData();
 
-		return new LinkedHashSet<>(
-				Stream.concat(
+		return Stream.concat(
 				// Get common VCF attributes
 				generateVcfAttributes(vcfFile).stream(),
 					// Add file-specific attributes
@@ -453,8 +508,7 @@ public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 						createInfoAttributes(vcfFile).stream(),
 						// Add FORMAT attributes
 						createFormatAttributes(vcfFile).stream()
-				)).collect(Collectors.toList())
-			);
+				)).collect(Collectors.toList());
 	}
 	
 	static String createInfoAttributeName(String infoName) {
@@ -470,9 +524,9 @@ public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 	/**
 	 * Generate obligatory VCF file attributes.
 	 * 
-	 * @return Set of Attribute objects
+	 * @return List of Attribute objects
 	 */
-	static Set<Attribute<?>> generateVcfAttributes(VcfFile vcfFile) {
+	static List<Attribute<?>> generateVcfAttributes(VcfFile vcfFile) {
 
 		//Create obligatory VCF attributes
 		return Arrays.asList(
@@ -492,15 +546,15 @@ public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 							.build(),
 					generateFilterAttribute(vcfFile)
 				).stream()
-				.collect(Collectors.toSet());
+				.collect(Collectors.toList());
 		
 	}
 
 	/**
-	 * Generate file-specific FILTER attributes.
+	 * Generate file-specific FILTER attribute
 	 * 
-	 * @param vcfFile File to generate attributes for
-	 * @return Set of Attribute objects
+	 * @param vcfFile VCF file data
+	 * @return Attribute holding the filter IDs as its values
 	 */
 	static Attribute<String> generateFilterAttribute(VcfFile vcfFile) {
 
@@ -514,12 +568,12 @@ public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 	 * Generate file-specific INFO attributes.
 	 * 
 	 * @param vcfFile File to generate attributes for
-	 * @return Set of Attribute objects
+	 * @return List of Attribute objects
 	 */
 	@SuppressWarnings("unchecked")
-	static Set<Attribute<?>> createInfoAttributes(VcfFile vcfFile) {
+	static List<Attribute<?>> createInfoAttributes(VcfFile vcfFile) {
 		// This double casting is required for javac to sleep well. Eclipse compiler is fine without it
-		return (Set<Attribute<?>>) (Set<?>) vcfFile.getInfos().entrySet()
+		return (List<Attribute<?>>) (List<?>) vcfFile.getInfos().entrySet()
 			.stream()
 			.map((Map.Entry<String, Information> entry) -> {
 
@@ -549,19 +603,19 @@ public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 						info.getType(), 
 						values);
 			})
-			.collect(Collectors.toSet());
+			.collect(Collectors.toList());
 	}
 
 	/**
 	 * Generate file-specific FORMAT attributes.
 	 * 
 	 * @param vcfFile File to generate attributes for
-	 * @return Set of Attribute objects
+	 * @return List of Attribute objects
 	 */
 	@SuppressWarnings("unchecked")
-	static Set<Attribute<?>> createFormatAttributes(VcfFile vcfFile) {
+	static List<Attribute<?>> createFormatAttributes(VcfFile vcfFile) {
 		// This double casting is required for javac to sleep well. Eclipse compiler is fine without it
-		return (Set<Attribute<?>>) (Set<?>) vcfFile.getFormats().entrySet().stream()
+		return (List<Attribute<?>>) (List<?>) vcfFile.getFormats().entrySet().stream()
 				.flatMap(entry -> {
 
 					String id = entry.getKey();
@@ -593,7 +647,7 @@ public final class VcfFileDataSource extends AbstractDataSource<VariantBand> {
 									format.getType(),
 									values));
 				})
-				.collect(Collectors.toSet());
+				.collect(Collectors.toList());
 
 	}
 

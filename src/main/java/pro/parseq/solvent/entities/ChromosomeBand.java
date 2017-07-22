@@ -1,5 +1,7 @@
 package pro.parseq.solvent.entities;
 
+import java.io.Serializable;
+
 import org.springframework.hateoas.core.Relation;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -8,8 +10,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import pro.parseq.solvent.utils.GenomicCoordinate;
 
+
 @Relation(collectionRelation = "bands")
-public class ChromosomeBand extends AbstractPropertiesAwareBand {
+public class ChromosomeBand extends AbstractPropertiesAwareBand implements Serializable {
+
+	private static final long serialVersionUID = 8392164009945027412L;
 
 	private static final String NAME_ATTRIBUTE = "name";
 

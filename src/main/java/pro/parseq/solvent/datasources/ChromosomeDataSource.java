@@ -2,7 +2,6 @@ package pro.parseq.solvent.datasources;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -23,16 +22,19 @@ import pro.parseq.solvent.utils.PredicateUtils;
 @JsonInclude(Include.NON_NULL)
 public class ChromosomeDataSource extends AbstractDataSource<ChromosomeBand> {
 
+	private static final long serialVersionUID = -2354177942699436299L;
+	
+	private static final List<Attribute<?>> attributes;
+
 	private final Track track;
 
-	private static final Set<Attribute<?>> attributes;
 	static {
 
 		StringAttribute chrName = new StringAttribute
 				.StringAttributeBuilder("name").description("Chromosome name")
 				.build();
 
-		attributes = Stream.of(chrName).collect(Collectors.toSet());
+		attributes = Stream.of(chrName).collect(Collectors.toList());
 	}
 
 	private final Comparator<GenomicCoordinate> comparator;
@@ -69,7 +71,7 @@ public class ChromosomeDataSource extends AbstractDataSource<ChromosomeBand> {
 	}
 
 	@Override
-	public Set<Attribute<?>> attributes() {
+	public List<Attribute<?>> attributes() {
 		return attributes;
 	}
 

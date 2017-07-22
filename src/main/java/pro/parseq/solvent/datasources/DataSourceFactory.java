@@ -18,6 +18,7 @@
  *******************************************************************************/
 package pro.parseq.solvent.datasources;
 
+import java.io.IOException;
 import java.io.InputStream;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,17 +39,15 @@ public class DataSourceFactory {
 				masterDataSource.getReferenceGenome().getId());
 	}
 
-	public VariantsBedFileDataSource variantsBedFileDataSourceInstance(Track track, InputStream bed) {
-
-		return new VariantsBedFileDataSource(track, bed,
-				masterDataSource.getComparator(),
-				masterDataSource.getReferenceGenome().getId());
-	}
-
 	public VcfFileDataSource vcfFileDataSourceInstance(Track track, InputStream vcf) {
 
-		return new VcfFileDataSource(track, vcf,
-				masterDataSource.getComparator(),
-				masterDataSource.getReferenceGenome().getId());
+		try {
+			return new VcfFileDataSource(track, vcf,
+					masterDataSource.getComparator(),
+					masterDataSource.getReferenceGenome().getId());
+		} catch (IOException e) {
+			throw new IllegalArgumentException("Error with reading VCF stream provided", e);
+		}
 	}
+	
 }

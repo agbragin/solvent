@@ -18,6 +18,7 @@
  *******************************************************************************/
 package pro.parseq.solvent.datasources.attributes;
 
+import java.io.Serializable;
 import java.util.Collection;
 
 import org.springframework.hateoas.Identifiable;
@@ -31,7 +32,7 @@ import pro.parseq.solvent.datasources.filters.FilterOperator;
  * 
  * @param <T> refers to attribute type
  */
-public interface Attribute<T extends Comparable<T>> extends Identifiable<Long> {
+public interface Attribute<T extends Comparable<T>> extends Identifiable<Long>, Serializable {
 
 	/**
 	 * Get attribute name that can be displayed. 

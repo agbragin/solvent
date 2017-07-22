@@ -28,6 +28,8 @@ import pro.parseq.solvent.datasources.filters.FilterOperator;
 @Relation(collectionRelation = "attributes")
 public class StringAttribute extends AbstractAttribute<String> {
 
+	private static final long serialVersionUID = -2858324776122059012L;
+
 	private StringAttribute(String name, String description) {
 		super(name, AttributeType.STRING, description, null);
 	}

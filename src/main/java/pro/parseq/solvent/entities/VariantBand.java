@@ -27,6 +27,8 @@ import pro.parseq.solvent.utils.GenomicCoordinate;
 @Relation(collectionRelation = "bands")
 public class VariantBand extends AbstractPropertiesAwareBand {
 
+	private static final long serialVersionUID = -3851489643248464449L;
+
 	public VariantBand(Track track,
 			GenomicCoordinate startCoord, GenomicCoordinate endCoord,
 			String name, JsonNode properties) {

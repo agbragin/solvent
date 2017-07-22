@@ -31,6 +31,7 @@ import pro.parseq.solvent.exceptions.IllegalAttributeValueException;
 @Relation(collectionRelation = "attributes")
 public class BooleanAttribute extends SetAttribute<Boolean> {
 
+	private static final long serialVersionUID = 4641569087913061720L;
 	private static final Set<Boolean> values = new HashSet<>();
 	
 	static {

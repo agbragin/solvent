@@ -30,6 +30,8 @@ import pro.parseq.solvent.utils.StringUtils;
 @Relation(collectionRelation = "attributes")
 public class EnumAttribute<T extends Enum<T>> extends SetAttribute<T> {
 
+	private static final long serialVersionUID = -805522500785214422L;
+	
 	private final Class<T> declaringClass;
 
 	private EnumAttribute(String name, String description, Class<T> enumerationClass) {

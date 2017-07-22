@@ -27,6 +27,8 @@ import pro.parseq.solvent.utils.GenomicCoordinate;
 @Relation(collectionRelation = "bands")
 public class BedBand extends AbstractPropertiesAwareBand {
 
+	private static final long serialVersionUID = 1086744425254066136L;
+
 	public BedBand(Track track, GenomicCoordinate startCoord, GenomicCoordinate endCoord,
 			String name, JsonNode properties) {
 

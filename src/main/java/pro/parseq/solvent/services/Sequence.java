@@ -1,5 +1,7 @@
 package pro.parseq.solvent.services;
 
+import java.io.Serializable;
+
 import pro.parseq.solvent.exceptions.CoordinateOutOfBoundsException;
 import pro.parseq.solvent.utils.GenomicCoordinate;
 
@@ -8,7 +10,7 @@ import pro.parseq.solvent.utils.GenomicCoordinate;
  * 
  * @author Alexander Afanasyev <a href="mailto:aafanasyev@parseq.pro">aafanasyev@parseq.pro</a>
  */
-public interface Sequence {
+public interface Sequence extends Serializable {
 
 	/**
 	 * Sequence start position (1-based, inclusive)

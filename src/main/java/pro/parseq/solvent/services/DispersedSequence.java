@@ -13,6 +13,8 @@ import pro.parseq.solvent.utils.PredicateUtils;
 
 public class DispersedSequence implements Sequence {
 
+	private static final long serialVersionUID = 676636366880220646L;
+	
 	private final GenomicCoordinate startCoord;
 	private final GenomicCoordinate endCoord;
 

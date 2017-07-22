@@ -186,6 +186,33 @@ public class MasterDataSourceTest {
 
 		assertThat((Set<Band>) response.getBands()).containsExactlyInAnyOrder(fooBand, fooFirstNucleotide, fooSecondNucleotide, fooThirdNucleotide, fooFourthNucleotide, fooFifthNucleotide, fooSixthNucleotide, fooSeventhNucleotide, fooLastNucleotide);
 
+		query = new QueryForBands(fooThird, 1, 0,  dataSources);
+		response = masterDataSource.getBands(query);
+		logger.info("Retrieved bands for request {}:{}:{} are: {}",
+				fooThird, 1, 0, response.getBands());
+
+		assertThat((Set<Band>) response.getBands()).containsExactlyInAnyOrder(fooBand, fooFirstNucleotide, fooSecondNucleotide, fooThirdNucleotide);
+		assertFalse(response.isLeftmost());
+		assertFalse(response.isRightmost());
+
+		query = new QueryForBands(fooThird, 2, 0,  dataSources);
+		response = masterDataSource.getBands(query);
+		logger.info("Retrieved bands for request {}:{}:{} are: {}",
+				fooThird, 2, 0, response.getBands());
+
+		assertThat((Set<Band>) response.getBands()).containsExactlyInAnyOrder(fooBand, fooFirstNucleotide, fooSecondNucleotide, fooThirdNucleotide);
+		assertTrue(response.isLeftmost());
+		assertFalse(response.isRightmost());
+
+		query = new QueryForBands(fooSecond, 1, 0,  dataSources);
+		response = masterDataSource.getBands(query);
+		logger.info("Retrieved bands for request {}:{}:{} are: {}",
+				fooSecond, 1, 0, response.getBands());
+
+		assertThat((Set<Band>) response.getBands()).containsExactlyInAnyOrder(fooBand, fooFirstNucleotide, fooSecondNucleotide);
+		assertTrue(response.isLeftmost());
+		assertFalse(response.isRightmost());
+
 		query = new QueryForBands(barSecond, 0, 0,  dataSources);
 		response = masterDataSource.getBands(query);
 		logger.info("Retrieved bands for request {}:{}:{} are: {}",

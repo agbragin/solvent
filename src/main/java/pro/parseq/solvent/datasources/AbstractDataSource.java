@@ -37,6 +37,8 @@ import pro.parseq.solvent.utils.GenomicCoordinate;
 public abstract class AbstractDataSource<T extends Band> implements DataSource<T> {
 
 	private static final Logger logger = LoggerFactory.getLogger(AbstractDataSource.class);
+	
+	private static final long serialVersionUID = -18084241132985408L;
 
 	private final long id;
 

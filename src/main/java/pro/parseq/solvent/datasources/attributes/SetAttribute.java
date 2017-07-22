@@ -43,6 +43,8 @@ import pro.parseq.solvent.exceptions.IllegalAttributeValueException;
 @Relation(collectionRelation = "attributes")
 public class SetAttribute<T extends Comparable<T>> extends AbstractAttribute<T> {
 
+	private static final long serialVersionUID = 6535752266242780467L;
+
 	private static final Logger logger = LoggerFactory.getLogger(SetAttribute.class);
 	
 	private final Map<String, T> valueMap;

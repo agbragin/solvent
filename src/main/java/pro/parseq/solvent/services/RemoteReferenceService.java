@@ -18,6 +18,9 @@
  *******************************************************************************/
 package pro.parseq.solvent.services;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.net.URI;
 import java.util.HashSet;
 import java.util.List;
@@ -51,15 +54,21 @@ import pro.parseq.solvent.utils.GenomicCoordinate;
 public class RemoteReferenceService extends AbstractReferenceService {
 
 	private static final Logger logger = LoggerFactory.getLogger(RemoteReferenceService.class);
+	private static final long serialVersionUID = -6683351666501392599L;
 
 	private RefserviceConfig config;
 
-	private RestTemplate restTemplate = new RestTemplate();
+	private transient RestTemplate restTemplate = new RestTemplate();
 
 	public RemoteReferenceService(RefserviceConfig config) {
 		this.config = config;
 	}
 
+	private void readObject(ObjectInputStream s) throws IOException, ClassNotFoundException {
+		s.defaultReadObject();
+		restTemplate = new RestTemplate();
+	}
+	
 	@Override
 	protected String getSequence(GenomicCoordinate coord, int count) {
 
@@ -91,7 +100,7 @@ public class RemoteReferenceService extends AbstractReferenceService {
 	@Override
 	public List<Contig> getContigs(String referenceGenomeName) {
 
-		logger.info("Perform an HTTP request for contigs list of referenc genome: {}",
+		logger.info("Perform an HTTP request for contigs list of reference genome: {}",
 				referenceGenomeName);
 
 		try {

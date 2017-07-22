@@ -16,32 +16,35 @@
  *     You should have received a copy of the GNU Affero General Public License
  *     along with CONC. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package pro.parseq.solvent.datasources.filters;
+package pro.parseq.solvent.exceptions;
 
-import java.io.Serializable;
-import java.util.List;
+import java.io.File;
+import java.nio.file.AccessMode;
 
-import pro.parseq.solvent.entities.AttributeFilterAggregateEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
-public class FilterQuery implements Serializable {
+@ResponseStatus(code = HttpStatus.FORBIDDEN, reason = "Access denied")
+public class FileAccessDeniedException extends RuntimeException {
 
-	private static final long serialVersionUID = -4389117574457124548L;
-	
-	private final List<AttributeFilter<?>> filters;
-	private final List<AttributeFilterAggregateEntity> aggregates;
+	private static final long serialVersionUID = -2838495267107651435L;
 
-	public FilterQuery(List<AttributeFilter<?>> filters,
-			List<AttributeFilterAggregateEntity> aggregates) {
+	private final File file;
+	private final AccessMode mode;
 
-		this.filters = filters;
-		this.aggregates = aggregates;
+	public FileAccessDeniedException(File file, AccessMode mode) {
+
+		super(String.format("Access denied exception: can not %s the file: %s", mode, file.getAbsolutePath()));
+
+		this.file = file;
+		this.mode = mode;
 	}
 
-	public List<AttributeFilter<?>> getFilters() {
-		return filters;
+	public File getFile() {
+		return file;
 	}
 
-	public List<AttributeFilterAggregateEntity> getAggregates() {
-		return aggregates;
+	public AccessMode getMode() {
+		return mode;
 	}
 }

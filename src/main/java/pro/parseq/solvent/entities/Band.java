@@ -18,9 +18,11 @@
  *******************************************************************************/
 package pro.parseq.solvent.entities;
 
+import java.io.Serializable;
+
 import pro.parseq.solvent.utils.GenomicCoordinate;
 
-public interface Band {
+public interface Band extends Serializable {
 
 	Track getTrack();
 

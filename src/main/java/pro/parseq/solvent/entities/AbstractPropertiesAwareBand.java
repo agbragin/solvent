@@ -1,13 +1,27 @@
 package pro.parseq.solvent.entities;
 
+import java.util.Arrays;
+
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import pro.parseq.solvent.utils.GenomicCoordinate;
 import pro.parseq.solvent.utils.PropertiesAware;
 
 public abstract class AbstractPropertiesAwareBand extends AbstractBand implements PropertiesAware {
 
-	private JsonNode properties;
+	private final static Logger logger = LoggerFactory.getLogger(AbstractPropertiesAwareBand.class);
+	
+	private static final long serialVersionUID = -25765442137549700L;
+	
+	private static final ObjectMapper objectMapper = new ObjectMapper();
+	
+	private byte[] propertiesBytes;
 
 	public AbstractPropertiesAwareBand(Track track,
 			GenomicCoordinate startCoord, GenomicCoordinate endCoord,
@@ -15,17 +29,28 @@ public abstract class AbstractPropertiesAwareBand extends AbstractBand implement
 
 		super(track, startCoord, endCoord, name);
 
-		this.properties = properties;
+		try {
+			this.propertiesBytes = objectMapper.writeValueAsBytes(properties);
+		} catch (JsonProcessingException e) {
+			throw new IllegalArgumentException("Malformed band properties", e); 
+		}
 	}
-
-
+	
 	@Override
 	public JsonNode getProperties() {
-		return properties;
+		try {
+			return objectMapper.readTree(propertiesBytes);
+		} catch (Exception e) {
+			throw new IllegalStateException("Error reading object properties", e);
+		}
 	}
 
 	public void setProperties(JsonNode properties) {
-		this.properties = properties;
+		try {
+			this.propertiesBytes = objectMapper.writeValueAsBytes(properties);
+		} catch (JsonProcessingException e) {
+			throw new IllegalArgumentException("Malformed band properties", e); 
+		}
 	}
 
 	@Override
@@ -40,11 +65,26 @@ public abstract class AbstractPropertiesAwareBand extends AbstractBand implement
 		if (!(obj instanceof AbstractPropertiesAwareBand)) {
 			return false;
 		}
-
-		return getTrack().equals(((BedBand) obj).getTrack())
-				&& getStartCoord().equals(((BedBand) obj).getStartCoord())
-				&& getEndCoord().equals(((BedBand) obj).getEndCoord())
-				&& getName().equals(((BedBand) obj).getName())
-				&& getProperties().equals(((BedBand) obj).getProperties());
+		
+		BedBand other = (BedBand) obj; 
+		
+		return getTrack().equals(other.getTrack())
+				&& getStartCoord().equals(other.getStartCoord())
+				&& getEndCoord().equals(other.getEndCoord())
+				&& getName().equals(other.getName())
+				&& getProperties().equals(other.getProperties());
+	}
+	
+	@Override
+	public int hashCode() {
+		logger.debug("Build hash for: {}", this);
+		return new HashCodeBuilder(21, 81)
+					.append(getTrack())
+					.append(getStartCoord())
+					.append(getEndCoord())
+					.append(getName())
+					.append(getProperties())
+					.toHashCode();
+		
 	}
 }

@@ -24,9 +24,8 @@ import org.springframework.hateoas.core.Relation;
 public enum DataSourceType {
 
 	CHROMOSOME("chromosome"),
-	BASIC_BED("basic_bed"),
 	REFERENCE("reference"),
-	VARIANTS_BED("variants_bed"),
+	BASIC_BED("basic_bed"),
 	VCF("vcf");
 	// etc.
 
@@ -50,6 +49,6 @@ public enum DataSourceType {
 		}
 
 		throw new IllegalArgumentException(
-				String.format("BedType: Unknown value [%s]", value));
+				String.format("Bad data source type: Unknown value [%s]", value));
 	}
 }

@@ -18,6 +18,8 @@ import pro.parseq.solvent.utils.GenomicCoordinate;
 public class BufferedReferenceServiceClient extends AbstractReferenceService {
 
 	private static final Logger logger = LoggerFactory.getLogger(BufferedReferenceServiceClient.class);
+	
+	private static final long serialVersionUID = -2228816845024776309L;
 
 	// TODO: move to application configuration
 	private static final int BUF_DECORATOR_HALF_SIZE = 100;

@@ -35,6 +35,8 @@ import pro.parseq.solvent.exceptions.IllegalAttributeValueException;
 @Relation(collectionRelation = "attributes")
 public class IntegerAttribute extends AbstractAttribute<Integer> {
 
+	private static final long serialVersionUID = 184910187499483599L;
+
 	private IntegerAttribute(String name, String description, AttributeRange<Integer> range) {
 		super(name, AttributeType.INTEGER, description, range);
 	}

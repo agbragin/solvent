@@ -6,6 +6,8 @@ import pro.parseq.solvent.utils.GenomicCoordinate;
 
 public class ContigSequence implements Sequence {
 
+	private static final long serialVersionUID = 4979913315102262137L;
+	
 	private final Contig contig;
 	private final GenomicCoordinate startCoord;
 	private final GenomicCoordinate endCoord;

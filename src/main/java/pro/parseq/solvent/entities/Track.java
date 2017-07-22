@@ -18,6 +18,7 @@
  *******************************************************************************/
 package pro.parseq.solvent.entities;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,7 +31,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import pro.parseq.solvent.datasources.DataSource;
 
 @Relation(collectionRelation = "tracks")
-public class Track {
+public class Track implements Serializable {
+
+	private static final long serialVersionUID = 1504446145142194646L;
 
 	@JsonProperty("track")
 	private final String name;

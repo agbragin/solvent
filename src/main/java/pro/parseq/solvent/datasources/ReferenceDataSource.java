@@ -1,7 +1,6 @@
 package pro.parseq.solvent.datasources;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -22,7 +21,8 @@ import pro.parseq.solvent.utils.Nucleotide;
 
 public class ReferenceDataSource implements DataSource<NucleotideBand> {
 
-	private static final Set<Attribute<?>> attributes = new HashSet<>();
+	private static final List<Attribute<?>> attributes = Arrays.asList();
+	private static final long serialVersionUID = 3478853414509461185L;
 
 	private final long id;
 	private ReferenceService referenceService;
@@ -52,7 +52,7 @@ public class ReferenceDataSource implements DataSource<NucleotideBand> {
 	}
 
 	@Override
-	public Set<Attribute<?>> attributes() {
+	public List<Attribute<?>> attributes() {
 		return attributes;
 	}
 

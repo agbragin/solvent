@@ -73,7 +73,7 @@ public class TrackController {
 	private AttributeFilterUtils attributeFilterUtils;
 
 	@GetMapping
-	public Resources<Resource<Track>> getTracks() {
+	public Resources<?> getTracks() {
 		return HateoasUtils.trackResources(masterDataSource.getTracks());
 	}
 
@@ -95,6 +95,7 @@ public class TrackController {
 
 		Track storedTrack = masterDataSource.getTrack(track.getName());
 		if (storedTrack == null) {
+			// TODO: the controller should return NOT_FOUND status, not throw an exception
 			throw new TrackNotFoundException(track);
 		}
 
@@ -249,10 +250,6 @@ public class TrackController {
 		switch (type) {
 		case VCF:
 			dataSource = dataSourceFactory.vcfFileDataSourceInstance(track, file);
-			break;
-
-		case VARIANTS_BED:
-			dataSource = dataSourceFactory.variantsBedFileDataSourceInstance(track, file);
 			break;
 
 		case BASIC_BED:

@@ -21,7 +21,6 @@ package pro.parseq.solvent.datasources;
 import java.io.InputStream;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -52,9 +51,11 @@ import com.fasterxml.jackson.annotation.JsonUnwrapped;
 @JsonInclude(Include.NON_NULL)
 public class BasicBedFileDataSource extends AbstractDataSource<BedBand> {
 
+	private static final long serialVersionUID = -6199931274697047895L;
+	
 	private static final int NAME_ATTRIBUTE_IDX = 0;
 	private static final String NAME_ATTRIBUTE = "name";
-	private static final Set<Attribute<?>> attributes;
+	private static final List<Attribute<?>> attributes;
 
 	protected final Track track;
 	protected Comparator<GenomicCoordinate> comparator;
@@ -69,7 +70,7 @@ public class BasicBedFileDataSource extends AbstractDataSource<BedBand> {
 				.StringAttributeBuilder("name").description("BED name field")
 				.build();
 
-		attributes = Stream.of(regionName).collect(Collectors.toSet());
+		attributes = Stream.of(regionName).collect(Collectors.toList());
 	}
 
 	public BasicBedFileDataSource(Track track, InputStream bed,
@@ -112,7 +113,7 @@ public class BasicBedFileDataSource extends AbstractDataSource<BedBand> {
 	}
 
 	@Override
-	public Set<Attribute<?>> attributes() {
+	public List<Attribute<?>> attributes() {
 		return attributes;
 	}
 

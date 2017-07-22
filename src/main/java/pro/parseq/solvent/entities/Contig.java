@@ -18,19 +18,28 @@
  *******************************************************************************/
 package pro.parseq.solvent.entities;
 
+import java.io.Serializable;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import org.springframework.hateoas.core.Relation;
+
+
 @JsonInclude(Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Contig {
+@Relation(collectionRelation = "contigs")
+public class Contig implements Serializable {
 
+	private static final long serialVersionUID = 917402420837103071L;
+	
 	/**
 	 * Can't use here something like this: @JsonUnwrapped(prefix = "referenceGenome")
 	 * due to: https://github.com/FasterXML/jackson-databind/issues/1467
+	 * unwrapped values would be simply null
 	 * 
 	 * TODO: change if it would be fixed
 	 */

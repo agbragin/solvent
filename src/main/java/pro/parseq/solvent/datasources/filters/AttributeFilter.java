@@ -18,12 +18,15 @@
  *******************************************************************************/
 package pro.parseq.solvent.datasources.filters;
 
+import java.io.Serializable;
 import java.util.Collection;
 
 import pro.parseq.solvent.datasources.attributes.Attribute;
 
-public class AttributeFilter<T extends Comparable<T>> {
+public class AttributeFilter<T extends Comparable<T>> implements Serializable {
 
+	private static final long serialVersionUID = -4000080153917129741L;
+	
 	private final long id;
 	private final Attribute<T> attribute;
 	private final FilterOperator operator;

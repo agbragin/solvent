@@ -18,6 +18,8 @@
  *******************************************************************************/
 package pro.parseq.solvent.datasources;
 
+import java.io.Serializable;
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.hateoas.Identifiable;
@@ -35,7 +37,7 @@ import pro.parseq.solvent.utils.GenomicCoordinate;
  * @author Alexander Afanasyev <a href="mailto:aafanasyev@parseq.pro">aafanasyev@parseq.pro</a>
  * @author Anton Bragin <a href="mailto:abragin@parseq.pro">abragin@parseq.pro</a>
  */
-public interface DataSource<T extends Band> extends Identifiable<Long> {
+public interface DataSource<T extends Band> extends Identifiable<Long>, Serializable {
 
 	/**
 	 * Returns data source's type
@@ -53,11 +55,11 @@ public interface DataSource<T extends Band> extends Identifiable<Long> {
 	DataSource<T> filter(FilterQuery query);
 
 	/**
-	 * Returns a set of available data source attributes to filter bands by
+	 * Lists available data source attributes to filter bands by
 	 * 
-	 * @return {@link Set} of available {@link Attribute}s to filter {@link Band}s by
+	 * @return {@link List} of available {@link Attribute}s to filter {@link Band}s by
 	 */
-	Set<Attribute<?>> attributes();
+	List<Attribute<?>> attributes();
 
 	/**
 	 * <p>Retrieve bands for specified parameters</p>

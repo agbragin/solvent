@@ -18,6 +18,7 @@
  *******************************************************************************/
 package pro.parseq.solvent.services;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Set;
 
@@ -31,7 +32,7 @@ import pro.parseq.solvent.utils.GenomicCoordinate;
  * 
  * @author Alexander Afanasyev <a href="mailto:aafanasyev@parseq.pro">aafanasyev@parseq.pro</a>
  */
-public interface ReferenceService {
+public interface ReferenceService extends Serializable {
 
 	/**
 	 * Returns a set of available reference genomes

@@ -33,6 +33,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonInclude(Include.NON_NULL)
 public abstract class AbstractAttribute<T extends Comparable<T>> implements Attribute<T>, Identifiable<Long> {
 
+	private static final long serialVersionUID = 172221617756879821L;
+	
 	private final long id;
 	private final String name;
 	private final AttributeType type;

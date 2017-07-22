@@ -5,19 +5,24 @@
 
 	<groupId>pro.parseq</groupId>
 	<artifactId>solvent</artifactId>
-	<version>1.3.0-RELEASE</version>
-	<packaging>war</packaging>
-
+    <version>1.4.0-RELEASE</version>
+    <!-- NOTE: war packaging being more appropriate currently is incompatible with Hazelcast.
+        For details see:
+            https://github.com/hazelcast/hazelcast/issues/2395
+        and:
+            https://github.com/spring-projects/spring-boot/issues/9014
+     -->
+	<packaging>jar</packaging>
 	<name>solvent</name>
 	<description>Concentrate browser server component</description>
 
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>1.4.3.RELEASE</version>
+		<version>1.5.3.RELEASE</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-    
+
     <profiles>
         <profile>
             <id>windows</id>
@@ -67,10 +72,10 @@
                                             <argument>--depth=1</argument>
                                             <!-- Moving .git folder out of static components -->
                                             <argument>-b</argument>
-                                            <argument>${project.version}</argument>
+                                            <argument>${project.build.standalone.branch}</argument>
                                             <argument>--separate-git-dir</argument>
                                             <argument>.git</argument>
-                                            <argument>https://github.com/parseq/concentrate.git</argument>
+                                            <argument>${project.build.standalone.repository}</argument>
                                             <argument>${project.build.finalName}/META-INF/resources</argument>
                                         </arguments>
                                     </configuration>
@@ -81,7 +86,7 @@
                                     <goals>
                                         <goal>exec</goal>
                                     </goals>
-                                    <phase>process-resources</phase>
+                                    <phase>generate-resources</phase>
                                     <configuration>
                                         <executable>${project.package.frontendBuildScript}</executable>
                                         <workingDirectory>target/${project.build.finalName}/META-INF/resources</workingDirectory>
@@ -101,6 +106,8 @@
 
 		<!-- Override version from bundle to use some Java 8 features from 3.6.x -->
 		<assertj-core.version>3.6.1</assertj-core.version>
+        
+        <postgresql.version>9.4.1208.jre7</postgresql.version>
 
 		<reference-explorer.version>0.1.1-RELEASE</reference-explorer.version>
         <vcf-explorer.version>1.1.1-RELEASE</vcf-explorer.version>
@@ -113,38 +120,65 @@
 		<project.deploy.server.username>tomcat</project.deploy.server.username>
 		<project.deploy.server.password>tomcat</project.deploy.server.password>
 		<project.deploy.server.path>/${project.name}</project.deploy.server.path>
+
+        <!-- Standalone build properties default values -->
+        <!-- You can override them like this: mvn package -P standalone -Dproject.build.standalone.branch=foo -->
+
+        <!-- Concentrate (front-end component) fetching properties  -->
+        <project.build.standalone.repository>https://github.com/parseq/concentrate.git</project.build.standalone.repository>
+        <project.build.standalone.branch>${project.version}</project.build.standalone.branch>
 	</properties>
 
 	<dependencies>
+    
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter</artifactId>
 		</dependency>
+        
 		<dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-tomcat</artifactId>
             <scope>provided</scope>
         </dependency>
-
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.assertj</groupId>
-			<artifactId>assertj-core</artifactId>
-			<version>${assertj-core.version}</version><!--$NO-MVN-MAN-VER$-->
-		</dependency>
+        
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-hateoas</artifactId>
 		</dependency>
+        
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.springframework.session</groupId>
+            <artifactId>spring-session</artifactId>
+        </dependency>
+
+        <!-- For sessions operation -->
+        <dependency>
+                <groupId>com.hazelcast</groupId>
+                <artifactId>hazelcast</artifactId>
+        </dependency>
 		
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>${assertj-core.version}</version>
+        </dependency>
+        
 		<dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
             <version>3.4</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.5</version>
         </dependency>
 		
 		<!-- Internally developed artifacts -->
@@ -159,6 +193,20 @@
 			<artifactId>reference-explorer</artifactId>
 			<version>${reference-explorer.version}</version>
 		</dependency>
+        
+        <!-- Test artifacts -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
 	</dependencies>
 
 	<build>
@@ -182,6 +230,17 @@
 				</configuration>
 			</plugin>
 		</plugins>
+        
+        <resources>
+            <resource>
+                <directory>${project.basedir}/src/main/resources</directory>
+            </resource>
+            <resource>
+                <targetPath>${project.build.outputDirectory}/META-INF/resources</targetPath>
+                <directory>target/${project.build.finalName}/META-INF/resources</directory>
+            </resource>
+        </resources>
+        
 	</build>
 
 </project>

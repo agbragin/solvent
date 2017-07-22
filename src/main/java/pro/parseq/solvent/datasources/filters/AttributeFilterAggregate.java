@@ -18,12 +18,15 @@
  *******************************************************************************/
 package pro.parseq.solvent.datasources.filters;
 
+import java.io.Serializable;
 import java.util.function.Predicate;
 
 import pro.parseq.solvent.utils.PropertiesAware;
 
-public class AttributeFilterAggregate {
+public class AttributeFilterAggregate implements Serializable {
 
+	private static final long serialVersionUID = 7643423193776845082L;
+	
 	private final long id;
 	private final Predicate<PropertiesAware> predicate;
 

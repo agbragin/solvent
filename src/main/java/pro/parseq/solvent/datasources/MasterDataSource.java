@@ -18,6 +18,7 @@
  *******************************************************************************/
 package pro.parseq.solvent.datasources;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -31,9 +32,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.annotation.SessionScope;
 
 import pro.parseq.solvent.datasources.attributes.Attribute;
 import pro.parseq.solvent.entities.Band;
@@ -42,13 +43,25 @@ import pro.parseq.solvent.entities.Track;
 import pro.parseq.solvent.services.ReferenceService;
 import pro.parseq.solvent.utils.GenomicCoordinate;
 import pro.parseq.solvent.utils.GenomicCoordinateComparatorFactory;
+import pro.parseq.solvent.utils.GenomicCoordinateComparatorFactoryImpl;
 import pro.parseq.solvent.utils.PredicateUtils;
 
+/**
+ * Central class that manages tracks and data sources and 
+ * 
+ * Implements {@link Serializable} to persist session scope.
+ * 
+ * @author abragin
+ *
+ */
+@SessionScope
 @Component
-public class MasterDataSource {
+public class MasterDataSource implements Serializable {
 
-	@Autowired
-	private GenomicCoordinateComparatorFactory genomicCoordinateComparatorFactory;
+	private static final long serialVersionUID = 9202322500198229060L;
+
+	private static GenomicCoordinateComparatorFactory genomicCoordinateComparatorFactory = 
+			new GenomicCoordinateComparatorFactoryImpl();
 
 	private Map<String, Track> tracks = new HashMap<>();
 
@@ -171,7 +184,14 @@ public class MasterDataSource {
 
 			// Retrieve data source's bands
 			Set <? extends Band> trackBands = dataSource
-					.getBands(query.getCoord(), query.getLeft(), query.getRight());
+					/*
+					 * Increment on each sides to guarantee fetching extra borders if present
+					 * to determine, whether the original request is for left-/right- most borders
+					 * 
+					 * Double increment motivated by the fact, that original requested coordinate
+					 * may be out of collection of actual coordinates (coords), but vOri consider that
+					 */
+					.getBands(query.getCoord(), query.getLeft() + 2, query.getRight() + 2);
 
 			// Retrieve bands' borders
 			coords.addAll(trackBands.stream()
@@ -213,18 +233,17 @@ public class MasterDataSource {
 		}
 		/**
 		 * Retrieve an information about whether the requested coordinates contain data sources' right outermost point
-		 * (in other words, do they hold more bands laying beyond the rightmost coordinate)
+		 * (in other words, do they hold more band borders laying beyond the rightmost coordinate)
 		 */
 		int rightmostIdx = ((vOri + query.getRight()) < sortedCoords.size()) ? (vOri + query.getRight()) : (sortedCoords.size() - 1);
-		GenomicCoordinate rightmost = sortedCoords.get(rightmostIdx);
-		boolean isRightmost = query.getDataSources().stream().allMatch(it -> it.getBands(rightmost, 0, 2).equals(it.getBands(rightmost, 0, 0)));
+		boolean isRightmost = rightmostIdx == (sortedCoords.size() - 1);
 
 		/**
 		 * Take left border generants
 		 * (due to Collections.binarySearch mechanism we start iterating from (vOri-1) by default,
 		 * so no need in any corrections as we done in right borders generants)
 		 */
-		for (int i = vOri - 1; i > -1 && (vOri - 1 - i) <= query.getLeft(); --i) {
+		for (int i = vOri - 1; i > -1 && (vOri - 1 - i) < query.getLeft(); --i) {
 			final int idx = i;
 			output.addAll(bands.stream()
 					.filter(PredicateUtils.isCovering(sortedCoords.get(idx), comparator))
@@ -232,11 +251,10 @@ public class MasterDataSource {
 		}
 		/**
 		 * Retrieve an information about whether the requested coordinates contain data sources' left outermost point
-		 * (in other words, do they hold more bands laying beyond the leftmost coordinate)
+		 * (in other words, do they hold band borders laying beyond the leftmost coordinate)
 		 */
 		int leftmostIdx = ((vOri - query.getLeft()) < 0) ? 0 : (vOri - query.getLeft());
-		GenomicCoordinate leftmost = sortedCoords.get(leftmostIdx);
-		boolean isLeftmost = query.getDataSources().stream().allMatch(it -> it.getBands(leftmost, 2, 0).equals(it.getBands(leftmost, 0, 0)));
+		boolean isLeftmost = leftmostIdx == 0;
 
 		return new DataSourceBands(output, isLeftmost, isRightmost);
 	}

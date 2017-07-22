@@ -18,12 +18,15 @@
  *******************************************************************************/
 package pro.parseq.solvent.entities;
 
+import java.io.Serializable;
 import java.util.Collection;
 
 import pro.parseq.solvent.datasources.filters.AggregateOperator;
 
-public class AttributeFilterAggregateEntity {
+public class AttributeFilterAggregateEntity implements Serializable {
 
+	private static final long serialVersionUID = 3814700751923071256L;
+	
 	private long id;
 	private Collection<Long> filters;
 	private AggregateOperator operator;

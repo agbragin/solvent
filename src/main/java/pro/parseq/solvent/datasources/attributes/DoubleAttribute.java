@@ -29,6 +29,8 @@ import pro.parseq.solvent.exceptions.IllegalAttributeValueException;
 @Relation(collectionRelation = "attributes")
 public class DoubleAttribute extends AbstractAttribute<Double> {
 
+	private static final long serialVersionUID = 7407888357588610032L;
+
 	private DoubleAttribute(String name, String description, AttributeRange<Double> range) {
 		super(name, AttributeType.FLOAT, description, range);
 	}
